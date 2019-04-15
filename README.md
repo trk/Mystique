@@ -6,6 +6,19 @@ This module allow you to create fields and store fields data on database by usin
 
 **Module includes and requires:** `FieldtypeMystique` and `InputfieldMystique`
 
+## Requirements
+
+* ProcessWire `3.0` or newer
+* PHP `7.0` or newer
+
+## Installation
+
+Install the module from the [modules directory](https://modules.processwire.com/modules/mystique/) or with Composer:
+
+```
+composer require trk/mystique
+```
+
 You can create config files under `site/templates/configs/` folder. And these files need to be `.php` file and need to return an php array with fields key.
 
 Mystique module sending `field options` to `ProcessWire` after making little bit modifications. Only difference is `showIf` option.

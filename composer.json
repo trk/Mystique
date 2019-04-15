@@ -1,0 +1,19 @@
+{
+    "name": "trk/mystique",
+    "description": "Mystique is a config file based field creation module for ProcessWire CMS/CMF by ALTI VE BIR IT.",
+    "type": "pw-module",
+    "keywords": ["processwire", "inputfield", "fieldtype", "dynamic", "builder", "form"],
+    "homepage": "https://github.com/trk/Mystique",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Iskender TOTOGLU",
+            "email": "iskender@altivebir.com",
+            "homepage": "https://altivebir.com/"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "hari/pw-module": "~1.0"
+    }
+}
