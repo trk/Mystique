@@ -1,6 +1,6 @@
 # Mystique Module for ProcessWire CMS/CMF
 
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/OlMxaQA5vTY/0.jpg)](http://www.youtube.com/watch?v=OlMxaQA5vTY)
+[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/qkYIOmJmiuU/0.jpg)](http://www.youtube.com/watch?v=qkYIOmJmiuU)
 
 This module allow you to create fields and store fields data on database by using a config file.
 
