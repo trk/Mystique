@@ -146,9 +146,9 @@ class InputfieldMystique extends Inputfield {
             if(in_array($name, $manager->checkboxFields)) {
                 $value = $this->input->post->{$manager->addPrefix($name)};
                 if($value) {
-                    $mystiqueValue->set($name, 1);
+                    $mystiqueValue->set($name, '1');
                 } else {
-                    $mystiqueValue->set($name, 0);
+                    $mystiqueValue->set($name, '0');
                 }
             } else if(in_array($name, $manager->languageFields)) {
                 $value = $this->input->post->{$manager->addPrefix($name)};

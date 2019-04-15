@@ -155,9 +155,10 @@ class FieldtypeMystique extends Fieldtype
     {
         if($subfield) {
             $value = '"' . $subfield . '":"' . $value . '"';
-            $subfield = 'data';
-            $operator = '%=';
         }
+        $subfield = 'data';
+        $operator = '%=';
+        
         if($this->wire('database')->isOperator($operator)) {
             // if dealing with something other than address, or operator is native to SQL,
             // then let Fieldtype::getMatchQuery handle it instead

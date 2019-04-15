@@ -44,6 +44,15 @@ return [
             'type' => Mystique::TEXTAREA,
             'useLanguages' => true
         ],
+        'page_tpye' => [
+            'label' => __('Type'),
+            'type' => Mystique::SELECT,
+            'options' => [
+                'basic' => __('Basic page'),
+                'gallery' => __('Gallery'),
+                'blog' => __('Blog')
+            ]
+        ],
         'show_on_nav' => [
             'label' => __('Display this page on navigation'),
             'type' => Mystique::CHECKBOX
@@ -58,7 +67,10 @@ Making search operator not important for Mystique field, on search process it wi
 
 ### Search example
 ```php
+// Looking for checlbox value, `=` operator will force converted to `%=` operator
 $navigationPages = pages()->find('template=basic-page, mystique_field.show_on_nav=1');
+// Looking for checlbox value, `=` operator will force converted to `%=` operator
+$navigationPages = pages()->find('template=basic-page, mystique_field.page_type=basic');
 ```
 
 

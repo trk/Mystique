@@ -59,9 +59,10 @@ class MystiqueValue extends WireData
             // Set default values
             foreach ($this->manager->inputFields as $name => $value) {
                 if(in_array($name, $this->manager->languageFields)) {
+                    $this->set($name, $value);
                     foreach ($this->languages ?: [] as $language) {
                         if ($language->isDefault()) {
-                            $this->set($name, $value);
+                            continue;
                         } else {
                             $this->set($name . $language->id, $value);
                         }
