@@ -102,14 +102,11 @@ class FieldtypeMystique extends Fieldtype
     {
         $MystiqueValue = $this->getBlankValue($page, $field);
 
-        $data = $value['data'] ? json_decode($value['data'], true) : [];
+        $data = $value ? json_decode($value, true) : [];
 
         foreach ($MystiqueValue as $name => $val) {
             $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : '';
         }
-
-        $MystiqueValue->resource = array_key_exists('resource', $data) ? $data['resource'] : '';
-        $MystiqueValue->path = array_key_exists('path', $data) ? $data['path'] : '';
 
         return $MystiqueValue;
     }
@@ -124,11 +121,8 @@ class FieldtypeMystique extends Fieldtype
         if(!$MystiqueValue instanceof MystiqueValue) {
             throw new WireException("Expecting an instance of MystiqueValue");
         }
-
         return [
-            'data' => json_encode($value->getArray()),
-            'resource' => $value['resource'],
-            'path' => $value['path']
+            'data' => json_encode($value->getArray())
         ];
     }
 
@@ -141,14 +135,7 @@ class FieldtypeMystique extends Fieldtype
 
         $schema['data'] = 'TEXT NOT NULL';
 
-        $schema['resource'] = "VARCHAR(32) NOT NULL DEFAULT ''";
-        $schema['path'] = "TEXT NOT NULL DEFAULT ''";
-
         $schema['keys']['data'] = 'FULLTEXT KEY `data` (`data`)';
-        $schema['keys']['resource'] = 'FULLTEXT KEY `resource` (`resource`)';
-        $schema['keys']['path'] = 'FULLTEXT KEY `path` (`path`)';
-
-        // unset($schema['keys']['data']);
 
         return $schema;
     }
@@ -166,13 +153,11 @@ class FieldtypeMystique extends Fieldtype
      */
     public function getMatchQuery($query, $table, $subfield, $operator, $value)
     {
-        $explode = explode('.', $value);
-        if(count($explode) > 1) {
-            $value = '"' . $explode[0] . '":"' . $explode[1] . '"';
-        } else {
-            $value = '"' . $value . '":';
+        if($subfield) {
+            $value = '"' . $subfield . '":"' . $value . '"';
+            $subfield = 'data';
+            $operator = '%=';
         }
-
         if($this->wire('database')->isOperator($operator)) {
             // if dealing with something other than address, or operator is native to SQL,
             // then let Fieldtype::getMatchQuery handle it instead

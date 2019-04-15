@@ -43,9 +43,22 @@ return [
             'label' => __('Description for search engines'),
             'type' => Mystique::TEXTAREA,
             'useLanguages' => true
+        ],
+        'show_on_nav' => [
+            'label' => __('Display this page on navigation'),
+            'type' => Mystique::CHECKBOX
         ]
     ]
 ];
+```
+
+Searching data inside this module is limited, because all data storing as a json value on to database.
+
+Making search operator not important for Mystique field, on search process it will be changed with `%=` operator.
+
+### Search example
+```php
+$navigationPages = pages()->find('template=basic-page, mystique_field.show_on_nav=1');
 ```
 
 

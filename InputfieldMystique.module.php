@@ -179,8 +179,8 @@ class InputfieldMystique extends Inputfield {
             $mystiqueValue->getPage()->trackChange($this->attr('name'));
         }
 
-        $mystiqueValue->set('resource', $manager->resourceName);
-        $mystiqueValue->set('path', $manager->resourcePath);
+        $mystiqueValue->set('__resource', $manager->resourceName);
+        $mystiqueValue->set('__path', $manager->resourcePath);
 
 
         return $this;

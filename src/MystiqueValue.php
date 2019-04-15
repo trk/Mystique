@@ -16,8 +16,8 @@ use ProcessWire\InputfieldMystique;
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
  *
- * @property $resource
- * @property $path
+ * @property $__resource
+ * @property $__path
  *
  * @package Altivebir\Mystique
  */
@@ -71,8 +71,8 @@ class MystiqueValue extends WireData
                 }
             }
 
-            $this->set('name', $resource['__name']);
-            $this->set('path', $resource['__path']);
+            $this->set('__name', $resource['__name']);
+            $this->set('__path', $resource['__path']);
         } else {
             throw new WireException("You need to select a resource and save field before start to use Mystique.");
         }
@@ -108,6 +108,16 @@ class MystiqueValue extends WireData
     public function getPage()
     {
         return $this->page;
+    }
+
+    public function getResource()
+    {
+        return $this->get('__resource');
+    }
+
+    public function getPath()
+    {
+        return $this->get('__path');
     }
 
     /**
