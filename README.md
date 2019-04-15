@@ -78,7 +78,7 @@ return [
 
 Searching data inside this module is limited, because all data storing as a json value on to database.
 
-Making search operator not important for Mystique field, on search process it will be changed with `%=` operator.
+**Making search:** operator not important for Mystique field, on search process it will be changed with `%=` operator.
 
 ### Search example
 ```php
