@@ -33,7 +33,7 @@ Default configs path is `site/templates/configs/`, and your config file name nee
 
 ```php
 // Add your custom path inside ready or init function, didn't tested outside
-Mytique::add('your-configs-path');
+Mystique::add('your-configs-path');
 ```
 
 All config files need to return a `php array` like examples. 
