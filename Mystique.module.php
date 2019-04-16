@@ -36,16 +36,11 @@ class Mystique extends WireData implements Module {
 
     const COLOR = 'InputfieldColor';
 
-    // const $pathSchema = 'resource.*.php';
+    /* @var Mystique $instance */
+    public static $instance;
 
-    /* @var array $resources */
-    protected static $resources = [];
-
-    /* @var array $paths */
+    /* @var array $paths Resources paths */
     protected static $paths = [];
-
-    /* @var string $class_name static class name*/
-    protected static $class_name = '';
 
     /**
      * @inheritdoc
@@ -78,44 +73,76 @@ class Mystique extends WireData implements Module {
         ];
     }
 
+    /**
+     * @inheritDoc
+     *
+     * @return Mystique
+     */
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function __construct()
+    {
+        self::$paths = new FilenameArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function ready()
     {
-        self::$class_name = $this->className;
-
         // Add default paths
-        self::addPath(__DIR__ . DIRECTORY_SEPARATOR . 'configs' . DIRECTORY_SEPARATOR);
-        self::addPath($this->config->paths->templates . 'configs' . DIRECTORY_SEPARATOR);
-        self::addPath($this->config->paths->siteModules . 'Altivebir' . DIRECTORY_SEPARATOR . 'configs' . DIRECTORY_SEPARATOR);
-
-        // Add resources from given paths
-        $paths = glob('{' . implode(',', self::$paths) . '}', GLOB_BRACE);
-        foreach ($paths as $k => $path) {
-            $name = str_replace([realpath($path), $this->className . '.', '.php'], '', basename($path));
-            self::$resources[$name] = $path;
-        }
+        self::add(__DIR__ . DIRECTORY_SEPARATOR . 'configs' . DIRECTORY_SEPARATOR);
+        self::add($this->config->paths->templates . 'configs' . DIRECTORY_SEPARATOR);
     }
 
-    /**
-     * Add resource to resources
-     *
-     * @param string $name
-     * @param string $path
-     */
-    public static function addResource(string $name, string $path)
+    public static function add($path)
     {
-        self::$resources[$name] = $path;
+        $path = $path . self::getInstance()->className . '.*.php';
+        self::$paths->add($path);
     }
 
     /**
-     * Get named resource
+     * Get all added resources paths
+     *
+     * @return array
+     */
+    public static function getResourcesPaths()
+    {
+        $resources = [];
+
+        $paths = [];
+        foreach (self::$paths as $path) {
+            $paths[] = $path;
+        }
+
+        $paths = glob('{' . implode(',', $paths) . '}', GLOB_BRACE);
+        foreach ($paths as $k => $path) {
+            $name = str_replace([realpath($path), self::getInstance()->className . '.', '.php'], '', basename($path));
+            $resources[$name] = $path;
+        }
+
+        return $resources;
+    }
+
+    /**
+     * Get resource data from resources
      *
      * @param string $name
      * @return array|mixed
      */
     public static function getResource(string $name)
     {
-        if(array_key_exists($name, self::$resources)) {
-            $path = self::$resources[$name];
+        $resources = self::getResourcesPaths();
+        if(array_key_exists($name, $resources)) {
+            $path = $resources[$name];
             if(file_exists($path)) {
                 $resource = include $path;
                 $resource['__name'] = $name;
@@ -128,42 +155,18 @@ class Mystique extends WireData implements Module {
     }
 
     /**
-     * Add path to paths
-     *
-     * @param string $path
-     */
-    public static function addPath(string $path)
-    {
-        $path = $path . self::$class_name . '.*.php';
-
-        if(!in_array($path, self::$paths)) {
-            self::$paths[] = $path;
-        }
-    }
-
-    /**
-     * Get all paths
-     *
-     * @return array
-     */
-    public static function getPaths()
-    {
-        return self::$paths;
-    }
-
-    /**
-     * Get all resources
+     * Get all resources data from resources paths
      *
      * @return array
      */
     public static function getResources()
     {
-        $data = [];
-        foreach (self::$resources as $name => $path) {
-            $data[$name] = self::getResource($name);
+        $resources = [];
+        $resourcesPaths = self::getResourcesPaths();
+        foreach ($resourcesPaths as $name => $path) {
+            $resources[$name] = self::getResource($name);
         }
 
-        return $data;
+        return $resources;
     }
-
 }

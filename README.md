@@ -25,6 +25,13 @@ Mystique module sending `field options` to `ProcessWire` after making little bit
 
 If you want to use `showIf` option for in file, use it like on example. Because Mystique module adding a prefix on field name for each Mystique field.
 
+- You can add your custom config paths to module by calling ```Mytique::add('your-configs-path');``` method.
+
+***NOTES***
+
+- Module in live reaction with your `config file`, this mean if you `remove a field` from your `config file`, field will be removed from edit screen. As you see on youtube video.
+
+
 - `site/templates/configs/Mystique.seo-fields.php`
 
 ```php
