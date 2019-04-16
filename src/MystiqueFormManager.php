@@ -4,6 +4,7 @@ namespace Altivebir\Mystique;
 
 use ProcessWire\Mystique;
 use ProcessWire\Inputfield;
+use ProcessWire\InputfieldFieldset;
 use ProcessWire\InputfieldMystique;
 use ProcessWire\InputfieldWrapper;
 use ProcessWire\Wire;
@@ -42,6 +43,9 @@ class MystiqueFormManager extends Wire
     /* @var InputfieldMystique $field */
     public $field;
 
+    /* @var MystiqueValue $values */
+    protected $values = null;
+
     /**
      * @inheritDoc
      *
@@ -60,35 +64,31 @@ class MystiqueFormManager extends Wire
         $this->resourcePath = $resource['__path'];
         $this->resource = $resource;
 
-        $this->prepareFields($this->resource['fields']);
-    }
-
-    public function buildFields(MystiqueValue $value)
-    {
-        return $this->prepareFields($this->resource['fields'], $value);
+        $this->setFields($this->resource['fields']);
     }
 
     /**
-     * Prepare fields for add wrapper
+     * Set field (prepare language fields, checkboxes and other fields )
      *
      * @param array $fields
-     * @param null $value
-     * @return array
-     * @throws \ProcessWire\WireException
      */
-    private function prepareFields($fields = [], $value = null)
+    private function setFields($fields = [])
     {
-        $data = [];
-
-        foreach ($fields as $name => $input) {
-
+        foreach ($fields as $key => $input) {
+            $name = array_key_exists('name', $input) ? $input['name'] : $key;
             $type = array_key_exists('type', $input) ? $input['type'] : Mystique::TEXT;
-            $type_fallback = array_key_exists('type_fallback', $input) ? $input['type_fallback'] : Mystique::TEXT;
+            $type_fallback = array_key_exists('type_fallback', $input) ? $input['type_fallback'] : false;
 
             $field = $input;
-
             if(array_key_exists('type', $field)) {
                 unset($field['type']);
+            }
+
+            if(strpos($type, 'Inputfield') === false) {
+                $type = 'Inputfield' . ucfirst($type);
+            }
+            if($type_fallback && strpos($type_fallback, 'Inputfield') === false) {
+                $type_fallback = 'Inputfield' . ucfirst($type_fallback);
             }
 
             if($this->modules->isInstalled($type)) {
@@ -99,147 +99,192 @@ class MystiqueFormManager extends Wire
 
             if(array_key_exists('type', $field)) {
 
-                $val = '';
-                if(is_null($value)) {
-                    $val = array_key_exists('value', $field) ? $field['value'] : '';
-                    if(!$val && array_key_exists('defaultValue', $field)) {
-                        $val = $field['defaultValue'];
-                    }
-                } elseif($value instanceof MystiqueValue && $value->get($name)) {
-                    $val = $value->get($name);
-                }
-
                 if(array_key_exists('useLanguages', $field) && $field['useLanguages']) {
                     $this->languageFields[] = $name;
-                    foreach ($this->wire('languages') ?: [] as $language) {
-                        if ($language->isDefault()) {
-                            continue;
-                        }
-                        if ($value instanceof MystiqueValue && $value->get($name . $language->id)) {
-                            $field['value' . $language->id] = $value->get($name . $language->id);
-                        }
-                    }
                 }
 
                 if(!$type != Mystique::FIELDSET && !$type != Mystique::MARKUP) {
-                    $this->inputFields[$name] = $val;
-                    $field['value'] = $val;
+                    $value = array_key_exists('value', $field) ? $field['value'] : '';
+                    if(!$value && array_key_exists('defaultValue', $field)) {
+                        $value = $field['defaultValue'];
+                    }
+                    $this->inputFields[$name] = $value;
                 }
 
                 if ($type == Mystique::CHECKBOX || $type == Mystique::TOGGLE_CHECKBOX) {
                     $this->checkboxFields[] = $name;
-                    if($val == 1) {
-                        $field['attr']['checked'] = 'checked';
+                }
+
+                if(array_key_exists('children', $field)) {
+                    $this->setFields($field['children']);
+                }
+            }
+        }
+    }
+
+    /**
+     * Build fields for render form
+     *
+     * @param MystiqueValue $value
+     * @return \ProcessWire\_Module|\ProcessWire\Module|null
+     * @throws \ProcessWire\WireException
+     * @throws \ProcessWire\WirePermissionException
+     */
+    public function build(MystiqueValue $value)
+    {
+        $this->values = $value;
+        return $this->buildFields($this->resource['fields'], new InputfieldWrapper());
+    }
+
+    /**
+     * Build fields for render
+     *
+     * @param array $fields
+     * @param null $wrapper
+     * @return InputfieldFieldset|InputfieldWrapper|null
+     * @throws \ProcessWire\WireException
+     * @throws \ProcessWire\WirePermissionException
+     */
+    public function buildFields($fields = [], $wrapper = null)
+    {
+        /* @var InputfieldWrapper|InputfieldFieldset $wrapper */
+        $wrapper = $wrapper ?: $this->modules->get('InputfieldWrapper');
+
+        if(count($fields)) {
+            foreach ($fields as $key => $input) {
+                $name = array_key_exists('name', $input) ? $input['name'] : $key;
+                $type = array_key_exists('type', $input) ? $input['type'] : Mystique::TEXT;
+                $type_fallback = array_key_exists('type_fallback', $input) ? $input['type_fallback'] : false;
+
+                $field = $input;
+                if(array_key_exists('type', $field)) {
+                    unset($field['type']);
+                }
+
+                if(strpos($type, 'Inputfield') === false) {
+                    $type = 'Inputfield' . ucfirst($type);
+                }
+                if($type_fallback && strpos($type_fallback, 'Inputfield') === false) {
+                    $type_fallback = 'Inputfield' . ucfirst($type_fallback);
+                }
+
+                if($this->modules->isInstalled($type)) {
+                    $field['type'] = $type;
+                } else if($this->modules->isInstalled($type_fallback)) {
+                    $field['type'] = $type_fallback;
+                }
+
+                if(array_key_exists('type', $field)) {
+                    $field['name'] = $name;
+
+                    if($field['type'] == Mystique::FIELDSET) {
+                        if(array_key_exists('children', $field) && count($field['children'])) {
+                            $children = $field['children'];
+                            unset($field['children']);
+                            $fieldset = $this->buildInputField($field);
+                            $wrapper->add($this->buildFields($children, $fieldset));
+                        }
+                    } else {
+                        $wrapper->add($this->buildInputField($field));
                     }
                 }
-
-                $label = array_key_exists('label', $field) ? $field['label'] : $name;
-
-                $field['name'] = $this->addPrefix($name);
-                $field['label'] = $label;
-
-                if(array_key_exists('showIf', $field) && is_array($field['showIf'])) {
-                    $field['showIf'] = $this->showIf($field['showIf']);
-                }
-                if(array_key_exists('children', $field)) {
-                    $field['children'] = $this->prepareFields($field['children'], $value);
-                }
-
-                $data[] = $field;
             }
         }
 
-        return $data;
+        return $wrapper;
     }
 
     /**
-     * Add prefix to given name
+     *  Build and return Inputfield
      *
-     * @param string $name
-     * @return string
+     * @param $field
+     * @return Inputfield
+     * @throws \ProcessWire\WireException
+     * @throws \ProcessWire\WirePermissionException
      */
-    public function addPrefix($name = '')
+    function buildInputField($field)
     {
-        return $this->field->name . '_' . $name;
+        /* @var Inputfield $inputField */
+        $inputField = $this->modules->get($field['type']);
+        $type = $field['type'];
+        $name = $field['name'];
+        $field['name'] = $this->buildPrefix($field['name']);
+        unset($field['type']);
+        foreach ($field as $property => $value) {
+            if($property != 'value') {
+                if(is_array($value) && $property == 'showIf') {
+                    $inputField->{$property} = $this->buildShowIF($value);
+                } else if(is_array($value) && $property == 'set' && count($value)) {
+                    foreach ($value as $prop => $val) {
+                        $inputField->set($prop, $val);
+                    }
+                } else {
+                    $inputField->{$property} = $value;
+                }
+            }
+        }
+
+        if(!$type != Mystique::FIELDSET && !$type != Mystique::MARKUP) {
+            $value = '';
+            if(!$this->values) {
+                $value = array_key_exists('value', $field) ? $field['value'] : '';
+                if(!$value && array_key_exists('defaultValue', $field)) {
+                    $value = $field['defaultValue'];
+                }
+            } elseif($this->values instanceof MystiqueValue && $this->values->get($name)) {
+                $value = $this->values->get($name);
+            }
+
+            if(array_key_exists('useLanguages', $field) && $field['useLanguages']) {
+                foreach ($this->wire('languages') ?: [] as $language) {
+                    if ($language->isDefault()) {
+                        continue;
+                    }
+                    if ($this->values instanceof MystiqueValue && $this->values->get($name . $language->id)) {
+                        $inputField->attr("value{$language->id}", $this->values->get($name . $language->id));
+                    }
+                }
+            }
+            if(!$type != Mystique::FIELDSET && !$type != Mystique::MARKUP) {
+                $inputField->value = $value;
+            }
+            if ($type == Mystique::CHECKBOX || $type == Mystique::TOGGLE_CHECKBOX) {
+                $inputField->attr('checked', ($value ? 'checked' : ''));
+            }
+        }
+
+        return $inputField;
     }
 
     /**
-     * Convert array showIf to string
+     * Build showIf for array values
      *
-     * @param $showIf
+     * @param $value
      * @return string
      */
-    protected function showIf($showIf) {
-
+    public function buildShowIF($value)
+    {
         $stringIF = '';
         $separator = ', ';
 
         $i = 1;
-        foreach ($showIf as $name => $condition) {
+        foreach ($value as $name => $condition) {
             $x = $i++;
-            $stringIF .= $this->addPrefix($name) . $condition;
-            if($x < count($showIf)) $stringIF .= $separator;
+            $stringIF .= $this->buildPrefix($name) . $condition;
+            if($x < count($value)) $stringIF .= $separator;
         }
 
         return $stringIF;
     }
 
     /**
-     * Populate the given form with the given data.
+     * Build prefix for input names
      *
-     * @param InputfieldWrapper $form
-     * @param array $values
-     * @throws \ProcessWire\WireException
-     */
-    public function populateValues(InputfieldWrapper $form, array $values)
-    {
-        $form->populateValues($values);
-
-        foreach ($form->getAll() as $inputfield) {
-            if ($inputfield->useLanguages) {
-                $this->populateLanguageValue($inputfield, $values);
-            }
-        }
-    }
-
-    /**
-     * Populate values of all languages to the given inputfield.
-     *
-     * @param Inputfield $inputfield
-     * @param array $values
-     * @throws \ProcessWire\WireException
-     */
-    private function populateLanguageValue(Inputfield $inputfield, array $values)
-    {
-        foreach ($this->wire('languages') ?: [] as $language) {
-            $langId = $language->id;
-            $name = $inputfield->attr('name');
-            $value = $values[$name . $langId] ?? $values[$name] ?? '';
-            $inputfield->set("value{$langId}", $value);
-        }
-    }
-
-    /**
-     * Build and return the inputfield for a given SEO config, e.g. meta description.
-     *
-     * @param string $group
      * @param string $name
-     * @param array $options
-     *
-     * @return \ProcessWire\Inputfield
+     * @return string
      */
-    private function getInputfield($group, $name, array $options)
+    public function buildPrefix($name = '')
     {
-        $getter = 'getInputfield' . ucfirst($group);
-
-        $inputfield = $this->{$getter}($name, $options);
-
-        $inputfield->attr('name', sprintf('%s_%s', $group, $name));
-        $inputfield->label = $options['label'] ?? $name;
-        $inputfield->description = $options['description'] ?? '';
-        $inputfield->notes = $options['notes'] ?? '';
-        $inputfield->useLanguages = $options['translatable'] ?? false;
-
-        return $inputfield;
+        return $this->field->name . '_' . $name;
     }
 }

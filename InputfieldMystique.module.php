@@ -123,7 +123,7 @@ class InputfieldMystique extends Inputfield {
         /* @var $value MystiqueValue */
         $value = $this->attr('value');
         // add fields with values to wrapper
-        $wrapper->add($manager->buildFields($value));
+        $wrapper->add($manager->build($value));
 
 		return $wrapper->render();
 	}
@@ -144,14 +144,14 @@ class InputfieldMystique extends Inputfield {
         // Loop all inputs and check posted data
         foreach ($manager->inputFields as $name => $value) {
             if(in_array($name, $manager->checkboxFields)) {
-                $value = $this->input->post->{$manager->addPrefix($name)};
+                $value = $this->input->post->{$manager->buildPrefix($name)};
                 if($value) {
                     $mystiqueValue->set($name, '1');
                 } else {
                     $mystiqueValue->set($name, '0');
                 }
             } else if(in_array($name, $manager->languageFields)) {
-                $value = $this->input->post->{$manager->addPrefix($name)};
+                $value = $this->input->post->{$manager->buildPrefix($name)};
                 if ($value !== null) {
                     $mystiqueValue->set($name, $value);
                 }
@@ -159,13 +159,13 @@ class InputfieldMystique extends Inputfield {
                     if ($language->isDefault()) {
                         continue;
                     }
-                    $value = $this->input->post->{$manager->addPrefix($name) . '__' . $language->id};
+                    $value = $this->input->post->{$manager->buildPrefix($name) . '__' . $language->id};
                     if ($value !== null) {
                         $mystiqueValue->set($name . $language->id, $value);
                     }
                 }
             } else {
-                $value = $this->input->post->{$manager->addPrefix($name)};
+                $value = $this->input->post->{$manager->buildPrefix($name)};
                 if ($value) {
                     $mystiqueValue->set($name, $value);
                 } else {
