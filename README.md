@@ -1,6 +1,6 @@
 # Mystique Module for ProcessWire CMS/CMF
 
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/qkYIOmJmiuU/0.jpg)](http://www.youtube.com/watch?v=qkYIOmJmiuU)
+[![QUICK VIDEO TUTORIAL](http://img.youtube.com/vi/qkYIOmJmiuU/0.jpg)](http://www.youtube.com/watch?v=qkYIOmJmiuU)
 
 
 `Mystique` module allow you to create dynamic fields and store dynamic fields data on database by using a config file.
@@ -15,12 +15,21 @@
 
 ## Installation
 
-Install the module from the [modules directory](https://modules.processwire.com/modules/mystique/) or with Composer:
+Install the module from the [modules directory](https://modules.processwire.com/modules/mystique/):
+
+Via `Composer`:
 
 ```
 composer require trk/mystique
 ```
 
+Via `git clone`:
+
+```
+cd your-processwire-project-folder/
+cd site/modules/
+git clone https://github.com/trk/Mystique.git
+```
 
 #### Module in live reaction with your `Mystique config file`
 
