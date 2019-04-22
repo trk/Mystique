@@ -34,16 +34,14 @@ class InputfieldMystique extends Inputfield {
     {
         return [
             'title' => 'Mystique',
-            'version' => 2,
+            'version' => 3,
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
             'requires' => [
                 'PHP>=7.0.0',
                 'ProcessWire>=3.0.0',
-                // 'FieldtypeMystique'
-            ],
-            'uninstalls' => [
+                'Mystique',
                 'FieldtypeMystique'
             ],
             'icon' => 'cogs'

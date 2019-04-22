@@ -55,6 +55,8 @@ class MystiqueValue extends WireData
         if($field->resource) {
             $this->manager = new MystiqueFormManager($field);
             $resource = Mystique::getResource($field->resource);
+            bd(Mystique::getResources());
+            bd($resource, $field->resource);
 
             // Set default values
             foreach ($this->manager->inputFields as $name => $value) {

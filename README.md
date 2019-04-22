@@ -41,8 +41,12 @@ This mean if you `remove a field` from your `config file`, field will be removed
 Default configs path is `site/templates/configs/`, and your config file name need to start with `Mystique.` and need to end with `.php` extension.
 
 ```php
-// Add your custom path inside ready or init function, didn't tested outside
-Mystique::add('your-configs-path');
+// Add your custom path inside your module class`init` function, didn't tested outside
+public function init()
+{
+    $path = __DIR__ . DIRECTORY_SEPARATOR . 'configs' . DIRECTORY_SEPARATOR;
+    Mystique::add($path);
+}
 ```
 
 All config files need to return a `php array` like examples. 
