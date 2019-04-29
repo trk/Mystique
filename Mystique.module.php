@@ -50,13 +50,15 @@ class Mystique extends WireData implements Module {
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => 3,
+            'version' => 4,
             'summary' => __('Mystique is a config file based field creation module for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
             'requires' => [
                 'PHP>=7.0.0',
-                'ProcessWire>=3.0.0',
+                'ProcessWire>=3.0.0'
+            ],
+            'installs' => [
                 'FieldtypeMystique',
                 'InputfieldMystique'
             ],

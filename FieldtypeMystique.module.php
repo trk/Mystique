@@ -22,15 +22,14 @@ class FieldtypeMystique extends Fieldtype
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => 3,
+            'version' => 4,
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
             'requires' => [
                 'PHP>=7.0.0',
                 'ProcessWire>=3.0.0',
-                'Mystique',
-                'InputfieldMystique'
+                'Mystique'
             ],
             'icon' => 'cogs'
         ];
