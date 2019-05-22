@@ -1,5 +1,9 @@
 # Release notes for Mystique Module
 
+- Fix inside repeater field usage
+
+## v.0.0.5
+
 - Fix module requires and installs
 
 ## v.0.0.4
