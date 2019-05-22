@@ -53,7 +53,7 @@ class MystiqueValue extends WireData
         $this->field = $field;
 
         if($field->resource) {
-            $this->manager = new MystiqueFormManager($field);
+            $this->manager = new MystiqueFormManager($field, $page);
             $resource = Mystique::getResource($field->resource);
 
             // Set default values

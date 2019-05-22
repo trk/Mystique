@@ -7,7 +7,9 @@ use ProcessWire\Inputfield;
 use ProcessWire\InputfieldFieldset;
 use ProcessWire\InputfieldMystique;
 use ProcessWire\InputfieldWrapper;
+use ProcessWire\Page;
 use ProcessWire\Wire;
+use ProcessWire\WireException;
 
 /**
  * Class MystiqueFormManager
@@ -43,20 +45,25 @@ class MystiqueFormManager extends Wire
     /* @var InputfieldMystique $field */
     public $field;
 
+    /* @var Page $page */
+    public $page;
+
     /* @var MystiqueValue $values */
     protected $values = null;
 
     /**
      * @inheritDoc
      *
-     * @param $field
-     * @throws \ProcessWire\WireException
+     * @param InputfieldMystique $field
+     * @param Page $page
+     * @throws WireException
      */
-    public function __construct($field)
+    public function __construct($field, $page)
     {
         parent::__construct();
 
         $this->field = $field;
+        $this->page = $page;
 
         $resource =  Mystique::getResource($this->field->resource);
 
@@ -285,6 +292,6 @@ class MystiqueFormManager extends Wire
      */
     public function buildPrefix($name = '')
     {
-        return $this->field->name . '_' . $name;
+        return $this->field->name . '_' . $name . '_' . $this->page->id;
     }
 }

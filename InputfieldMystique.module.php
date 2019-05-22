@@ -26,6 +26,11 @@ class InputfieldMystique extends Inputfield {
     private $field;
 
     /**
+     * @var Page $editedPage
+     */
+    private $editedPage;
+
+    /**
      * @inheritdoc
      *
      * @return array
@@ -80,11 +85,23 @@ class InputfieldMystique extends Inputfield {
     }
 
     /**
+     * @inheritDoc
+     *
      * @param Field $field
      */
     public function setField(Field $field)
     {
         $this->field = $field;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param Page $page
+     */
+    public function setEditedPage(Page $page)
+    {
+        $this->editedPage = $page;
     }
 
     /**
@@ -114,7 +131,7 @@ class InputfieldMystique extends Inputfield {
 	public function ___render()
     {
         /* @var MystiqueFormManager $manager */
-        $manager = new MystiqueFormManager($this->field);
+        $manager = new MystiqueFormManager($this->field, $this->editedPage);
         /* @var $wrapper InputfieldWrapper */
         $wrapper = $this->wire(new InputfieldWrapper());
         /* @var $value MystiqueValue */
@@ -135,7 +152,7 @@ class InputfieldMystique extends Inputfield {
     public function ___processInput(WireInputData $input)
     {
         /* @var MystiqueFormManager $manager */
-        $manager = new MystiqueFormManager($this->field);
+        $manager = new MystiqueFormManager($this->field, $this->editedPage);
         /* @var MystiqueValue $mystiqueValue */
         $mystiqueValue = $this->attr('value');
         // Loop all inputs and check posted data

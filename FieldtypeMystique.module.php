@@ -53,6 +53,7 @@ class FieldtypeMystique extends Fieldtype
         /* @var InputfieldMystique $inputField */
         $inputField = $this->wire('modules')->get('InputfieldMystique');
         $inputField->setField($field);
+        $inputField->setEditedPage($page);
 
         return $inputField;
     }
