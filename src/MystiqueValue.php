@@ -16,8 +16,10 @@ use ProcessWire\InputfieldMystique;
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
  *
- * @property $__resource
+ * @property $__json
+ * @property $__name
  * @property $__path
+ * @property $__resource
  *
  * @package Altivebir\Mystique
  */
@@ -52,9 +54,15 @@ class MystiqueValue extends WireData
         $this->page = $page;
         $this->field = $field;
 
-        if($field->resource) {
+        if($this->field->useJson && $this->field->jsonString || $field->resource) {
+
             $this->manager = new MystiqueFormManager($field, $page);
-            $resource = Mystique::getResource($field->resource);
+
+            if($this->field->useJson && $this->field->jsonString) {
+                $resource = json_decode($field->jsonString, true);
+            } else {
+                $resource =  Mystique::resource($this->field->resource);
+            }
 
             // Set default values
             foreach ($this->manager->inputFields as $name => $value) {
@@ -72,8 +80,9 @@ class MystiqueValue extends WireData
                 }
             }
 
-            $this->set('__name', $resource['__name']);
-            $this->set('__path', $resource['__path']);
+            $this->set('__json', json_encode($resource));
+            $this->set('__name', isset($resource['__name']) ? $resource['__name'] : '');
+            $this->set('__path', isset($resource['__path']) ? $resource['__path'] : '');
         } else {
             throw new WireException("You need to select a resource and save field before start to use Mystique.");
         }
