@@ -22,7 +22,7 @@ class FieldtypeMystique extends Fieldtype
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => 5,
+            'version' => 6,
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -56,19 +56,6 @@ class FieldtypeMystique extends Fieldtype
         $inputField->setEditedPage($page);
 
         return $inputField;
-    }
-
-    /**
-     * Return all compatible FieldTypes
-     *
-     * @param Field $field
-     * @return null
-     *
-     */
-    public function ___getCompatibleFieldtypes(Field $field)
-    {
-        // There are no other FieldTypes compatible with this FieldType
-        return null;
     }
 
     /**
