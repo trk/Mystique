@@ -59,19 +59,6 @@ class FieldtypeMystique extends Fieldtype
     }
 
     /**
-     * Return all compatible FieldTypes
-     *
-     * @param Field $field
-     * @return null
-     *
-     */
-    public function ___getCompatibleFieldtypes(Field $field)
-    {
-        // There are no other FieldTypes compatible with this FieldType
-        return null;
-    }
-
-    /**
      * Get a blank value used by this FieldType
      *
      * @param Page $page
