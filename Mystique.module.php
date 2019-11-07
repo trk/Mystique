@@ -38,9 +38,6 @@ class Mystique extends WireData implements Module {
 
     const COLOR = 'InputfieldColor';
 
-    /* @var Mystique $instance */
-    public static $instance;
-
     /**
      * @var array $resources
      */
@@ -77,32 +74,12 @@ class Mystique extends WireData implements Module {
 
     /**
      * @inheritDoc
-     *
-     * @return Mystique
-     */
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
-     * @inheritDoc
      */
     public function __construct()
     {
         parent::__construct();
 
         $this->wire('classLoader')->addNamespace('Altivebir\TemplateFieldManager', __DIR__ . '/src');
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function init()
-    {
-        
     }
 
     /**
@@ -121,47 +98,6 @@ class Mystique extends WireData implements Module {
 
             $this->resources[$base][$name] = $file;
         }
-    }
-
-    /**
-     * Make translations for custom "Application Module"
-     *
-     * @param array $fields
-     * @return array
-     */
-    protected function translate(array $fields = [])
-    {
-        foreach ($fields as $name => $field) {
-            
-            $title = isset($field["title"]) ? $field["title"] : "";
-            if ($title) {
-                $field["title"] = $this->wire("app")["_t"]($title);
-            }
-            
-            $label = isset($field["label"]) ? $field["label"] : "";
-            if ($label) {
-                $field["label"] = $this->wire("app")["_t"]($label);
-            }
-            
-            $checkboxLabel = isset($field["checkboxLabel"]) ? $field["checkboxLabel"] : "";
-            if ($checkboxLabel) {
-                $field["checkboxLabel"] = $this->wire("app")["_t"]($checkboxLabel);
-            }
-            
-            $description = isset($field["description"]) ? $field["description"] : "";
-            if ($description) {
-                $field["description"] = $this->wire("app")["_t"]($description);
-            }
-            
-            $notes = isset($field["notes"]) ? $field["notes"] : "";
-            if ($notes) {
-                $field["notes"] = $this->wire("app")["_t"]($notes);
-            }
-
-            $fields[$name] = $field;
-        }
-
-        return $fields;
     }
 
     /**
@@ -205,10 +141,6 @@ class Mystique extends WireData implements Module {
                 if (is_array($resource) && isset($resource["fields"]) && is_array($resource["fields"])) {
                     
                     $title = isset($resource["title"]) ? $resource["title"] : $name;
-
-                    if ($this->wire("app")) {
-                        // $resource["fields"] = $this->translate($resource["fields"]);
-                    }
     
                     $data["__id"] = $base . "." . $name;
                     $data["__base"] = $base;

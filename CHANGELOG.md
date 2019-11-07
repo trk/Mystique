@@ -1,5 +1,12 @@
 # Release notes for Mystique Module
 
+- remove `Mystique::add()` method
+- remove all `static` methods
+- add `search` for finding `Mystique` config files
+- update `MystiqueFormManager` and `MystiqueValue` classes
+
+## -next
+
 - rename `getResources()` as `resources($json = false)`
 - rename `getResource($name = '')` as `resource($name = '', $json = false)`
 - add option to input field, `use json string` instead of a `config file`
