@@ -21,6 +21,11 @@ use ProcessWire\WireException;
  */
 class MystiqueFormManager extends Wire
 {
+    /**
+     * @var Mystique $Mystique
+     */
+    protected $Mystique;
+
     /* @var array $resource Resource configs */
     private $resource = [];
 
@@ -65,13 +70,14 @@ class MystiqueFormManager extends Wire
     {
         parent::__construct();
 
+        $this->Mystique = $this->wire("modules")->get("Mystique");
         $this->field = $field;
         $this->page = $page;
 
         if($this->field->useJson && $this->field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource =  Mystique::resource($this->field->resource);
+            $resource =  $this->Mystique->resource($this->field->resource);
         }
 
         $this->resourceName = isset($resource['__name']) ? $resource['__name'] : '';
@@ -79,7 +85,7 @@ class MystiqueFormManager extends Wire
         $this->resourceJSON = json_encode($resource);
         $this->resource = $resource;
 
-        $this->setFields($this->resource['fields']);
+        $this->setFields($this->resource["__data"]["fields"]);
     }
 
     /**
@@ -148,7 +154,7 @@ class MystiqueFormManager extends Wire
     public function build(MystiqueValue $value)
     {
         $this->values = $value;
-        return $this->buildFields($this->resource['fields'], new InputfieldWrapper());
+        return $this->buildFields($this->resource["__data"]["fields"], new InputfieldWrapper());
     }
 
     /**

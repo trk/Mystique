@@ -26,6 +26,11 @@ use ProcessWire\InputfieldMystique;
 class MystiqueValue extends WireData
 {
     /**
+     * @var Mystique $Mystique
+     */
+    protected $Mystique;
+
+    /**
      * @var MystiqueFormManager
      */
     private $manager;
@@ -51,6 +56,7 @@ class MystiqueValue extends WireData
     {
         parent::__construct();
 
+        $this->Mystique = $this->wire("modules")->get("Mystique");
         $this->page = $page;
         $this->field = $field;
 
@@ -61,7 +67,7 @@ class MystiqueValue extends WireData
             if($this->field->useJson && $this->field->jsonString) {
                 $resource = json_decode($field->jsonString, true);
             } else {
-                $resource =  Mystique::resource($this->field->resource);
+                $resource =  $this->Mystique->resource($this->field->resource);
             }
 
             // Set default values

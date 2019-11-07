@@ -17,7 +17,12 @@ use Altivebir\Mystique\MystiqueValue;
  *
  * @package Altivebir\Mystique
  */
-class InputfieldMystique extends Inputfield {
+class InputfieldMystique extends Inputfield
+{
+    /**
+     * @var Mystique $Mystique
+     */
+    protected $Mystique;
 
     /* @var array $resources */
     private $resources = [];
@@ -65,11 +70,15 @@ class InputfieldMystique extends Inputfield {
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->resources = Mystique::resources();
+        $this->Mystique = $this->wire("modules")->get("Mystique");
 
-        $resource = '';
-        if(count($this->resources)) {
-            $resource = array_keys($this->resources)[0];
+        $this->resources = $this->Mystique->resources();
+
+        $resource = "";
+
+        if (count($this->resources)) {
+            $resource = reset($this->resources);
+            $resource = $resource["__id"];
         }
 
         // Set default resource
@@ -210,8 +219,6 @@ class InputfieldMystique extends Inputfield {
      */
     public function ___getConfigInputfields()
     {
-        $resources = Mystique::resources();
-
         $wrapper = parent::___getConfigInputfields();
 
         /* @var InputfieldCheckbox $checkbox */
@@ -238,12 +245,15 @@ class InputfieldMystique extends Inputfield {
         $select->label = __('Resource');
         $select->required = true;
         $select->showIf = "useJson=''";
-        if(count($resources)) {
-            $select->defaultValue = array_keys($resources)[0];
-        }
-        foreach ($resources as $name => $resource) {
-            $title = array_key_exists('title', $resource) ? $resource['title'] : $name;
-            $select->addOption($name, $title);
+
+        if (count($this->resources)) {
+            $resource = reset($this->resources);
+
+            $select->defaultValue = $resource["__id"];
+
+            foreach ($this->resources as $name => $resource) {
+                $select->addOption($resource["__id"], "{$resource['__title']} ({$resource['__base']})");
+            }
         }
 
         $select->value = $this->resource;
