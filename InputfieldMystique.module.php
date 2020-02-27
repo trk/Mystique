@@ -24,9 +24,6 @@ class InputfieldMystique extends Inputfield
      */
     protected $Mystique;
 
-    /* @var array $resources */
-    private $resources = [];
-
     /**
      * @var InputfieldMystique
      */
@@ -72,12 +69,12 @@ class InputfieldMystique extends Inputfield
 
         $this->Mystique = $this->wire("modules")->get("Mystique");
 
-        $this->resources = $this->Mystique->resources();
-
         $resource = "";
 
-        if (count($this->resources)) {
-            $resource = reset($this->resources);
+        // get resources
+        $resources = $this->Mystique->resources();
+        if (count($resources)) {
+            $resource = reset($resources);
             $resource = $resource["__id"];
         }
 
@@ -246,12 +243,14 @@ class InputfieldMystique extends Inputfield
         $select->required = true;
         $select->showIf = "useJson=''";
 
-        if (count($this->resources)) {
-            $resource = reset($this->resources);
+        // get resources
+        $resources = $this->Mystique->resources();
+        if (count($resources)) {
+            $resource = reset($resources);
 
             $select->defaultValue = $resource["__id"];
 
-            foreach ($this->resources as $name => $resource) {
+            foreach ($resources as $name => $resource) {
                 $select->addOption($resource["__id"], "{$resource['__title']} ({$resource['__base']})");
             }
         }

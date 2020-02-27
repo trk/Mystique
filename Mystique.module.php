@@ -87,17 +87,42 @@ class Mystique extends WireData implements Module {
      */
     public function ready()
     {
-        $path = $this->wire("config")->paths->siteModules . "**/configs/Mystique.*.php";
-        $path .= "," . $this->wire("config")->paths->templates . "configs/Mystique.*.php";
+        // $path = $this->wire("config")->paths->siteModules . "**/configs/Mystique.*.php";
+        // $path .= "," . $this->wire("config")->paths->templates . "configs/Mystique.*.php";
+        // $paths = glob("{" . $path . "}", GLOB_BRACE);
+        $paths = array_merge($this->finder($this->config->paths->siteModules), $this->finder($this->config->paths->templates . "configs" . DIRECTORY_SEPARATOR));
         
-        foreach (glob("{" . $path . "}", GLOB_BRACE) as $file) {
+        foreach ($paths as $file) {
 
             $dirname = dirname(dirname($file));
-            $base = strtolower(str_replace([dirname(dirname(dirname($file))), "/"], "", $dirname));
-            $name = str_replace([dirname($file), "/", "Mystique.", ".php"], "", $file);
+            $base = strtolower(str_replace([dirname(dirname(dirname($file))), DIRECTORY_SEPARATOR], "", $dirname));
+            $name = str_replace([dirname($file), DIRECTORY_SEPARATOR, "Mystique.", ".php"], "", $file);
 
             $this->resources[$base][$name] = $file;
         }
+    }
+
+    /**
+	 * Finder: find config files for module
+	 *
+	 * @param string $path
+	 * @param string $filter
+	 * 
+	 * @return array
+	 */
+	protected function finder(string $path, $filter = "configs/Mystique.")
+	{
+		$paths = array();
+
+		foreach($this->files->find($path, ["extensions" => ["php"]]) as $path) {
+			if ($filter && strpos($path, $filter) === false) {
+				continue;
+			}
+
+			$paths[] = $path;
+		}
+
+		return $paths;
     }
 
     /**

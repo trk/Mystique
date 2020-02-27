@@ -85,7 +85,9 @@ class MystiqueFormManager extends Wire
         $this->resourceJSON = json_encode($resource);
         $this->resource = $resource;
 
-        $this->setFields($this->resource["__data"]["fields"]);
+        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+
+        $this->setFields($fields);
     }
 
     /**
@@ -154,7 +156,10 @@ class MystiqueFormManager extends Wire
     public function build(MystiqueValue $value)
     {
         $this->values = $value;
-        return $this->buildFields($this->resource["__data"]["fields"], new InputfieldWrapper());
+        
+        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+
+        return $this->buildFields($fields, new InputfieldWrapper());
     }
 
     /**
