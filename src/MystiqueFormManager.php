@@ -21,6 +21,11 @@ use ProcessWire\WireException;
  */
 class MystiqueFormManager extends Wire
 {
+    /**
+     * @var Mystique $Mystique
+     */
+    protected $Mystique;
+
     /* @var array $resource Resource configs */
     private $resource = [];
 
@@ -29,6 +34,9 @@ class MystiqueFormManager extends Wire
 
     /* @var string $name Path of resource */
     public $resourcePath = '';
+
+    /* @var string $resourceJSON Resource data as json string */
+    public $resourceJSON = '';
 
     /* @var string $fields Resource fields */
     public $fields = [];
@@ -62,16 +70,24 @@ class MystiqueFormManager extends Wire
     {
         parent::__construct();
 
+        $this->Mystique = $this->wire("modules")->get("Mystique");
         $this->field = $field;
         $this->page = $page;
 
-        $resource =  Mystique::getResource($this->field->resource);
+        if($this->field->useJson && $this->field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
+        } else {
+            $resource =  $this->Mystique->resource($this->field->resource);
+        }
 
-        $this->resourceName = $resource['__name'];
-        $this->resourcePath = $resource['__path'];
+        $this->resourceName = isset($resource['__name']) ? $resource['__name'] : '';
+        $this->resourcePath = isset($resource['__path']) ? $resource['__path'] : '';
+        $this->resourceJSON = json_encode($resource);
         $this->resource = $resource;
 
-        $this->setFields($this->resource['fields']);
+        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+
+        $this->setFields($fields);
     }
 
     /**
@@ -140,7 +156,10 @@ class MystiqueFormManager extends Wire
     public function build(MystiqueValue $value)
     {
         $this->values = $value;
-        return $this->buildFields($this->resource['fields'], new InputfieldWrapper());
+        
+        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+
+        return $this->buildFields($fields, new InputfieldWrapper());
     }
 
     /**

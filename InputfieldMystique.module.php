@@ -12,13 +12,17 @@ use Altivebir\Mystique\MystiqueValue;
  * @website			: https://www.altivebir.com
  *
  * @property string $resource
+ * @property bool $useJson
+ * @property string $jsonString
  *
  * @package Altivebir\Mystique
  */
-class InputfieldMystique extends Inputfield {
-
-    /* @var array $resources */
-    private $resources = [];
+class InputfieldMystique extends Inputfield
+{
+    /**
+     * @var Mystique $Mystique
+     */
+    protected $Mystique;
 
     /**
      * @var InputfieldMystique
@@ -39,7 +43,7 @@ class InputfieldMystique extends Inputfield {
     {
         return [
             'title' => 'Mystique',
-            'version' => 6,
+            'version' => 7,
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -63,15 +67,21 @@ class InputfieldMystique extends Inputfield {
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->resources = Mystique::getResources();
+        $this->Mystique = $this->wire("modules")->get("Mystique");
 
-        $resource = '';
-        if(count($this->resources)) {
-            $resource = array_keys($this->resources)[0];
+        $resource = "";
+
+        // get resources
+        $resources = $this->Mystique->resources();
+        if (count($resources)) {
+            $resource = reset($resources);
+            $resource = $resource["__id"];
         }
 
         // Set default resource
         $this->set('resource', $resource);
+        $this->set('useJson', false);
+        $this->set('jsonString', '');
 	}
 
     /**
@@ -193,6 +203,7 @@ class InputfieldMystique extends Inputfield {
             $mystiqueValue->getPage()->trackChange($this->attr('name'));
         }
 
+        $mystiqueValue->set('__json', $manager->resourceJson);
         $mystiqueValue->set('__resource', $manager->resourceName);
         $mystiqueValue->set('__path', $manager->resourcePath);
 
@@ -205,21 +216,43 @@ class InputfieldMystique extends Inputfield {
      */
     public function ___getConfigInputfields()
     {
-        $resources = Mystique::getResources();
-
         $wrapper = parent::___getConfigInputfields();
+
+        /* @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'useJson');
+        $checkbox->set('label', $this->_('Use JSON string'));
+        $checkbox->set('checkboxLabel', $this->_('Use json string instead of a config file.'));
+        $checkbox->attr('checked', $this->useJson ? 'checked' : '');
+
+        $wrapper->append($checkbox);
+
+        /* @var InputfieldTextarea $textarea */
+        $textarea = $this->wire->modules->get('InputfieldTextarea');
+        $textarea->attr('name', 'jsonString');
+        $textarea->set('label', $this->_('JSON string'));
+        $textarea->value = $this->jsonString;
+        $textarea->showIf = "useJson!=''";
+
+        $wrapper->append($textarea);
 
         /* @var InputfieldSelect $select */
         $select = $this->modules->get('InputfieldSelect');
         $select->attr('name', 'resource');
         $select->label = __('Resource');
         $select->required = true;
-        if(count($resources)) {
-            $select->defaultValue = array_keys($resources)[0];
-        }
-        foreach ($resources as $name => $resource) {
-            $title = array_key_exists('title', $resource) ? $resource['title'] : $name;
-            $select->addOption($name, $title);
+        $select->showIf = "useJson=''";
+
+        // get resources
+        $resources = $this->Mystique->resources();
+        if (count($resources)) {
+            $resource = reset($resources);
+
+            $select->defaultValue = $resource["__id"];
+
+            foreach ($resources as $name => $resource) {
+                $select->addOption($resource["__id"], "{$resource['__title']} ({$resource['__base']})");
+            }
         }
 
         $select->value = $this->resource;

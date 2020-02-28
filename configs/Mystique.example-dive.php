@@ -64,10 +64,6 @@ return [
             'label' => __('Content'),
             'type' => Mystique::TEXTAREA,
             'useLanguages' => true
-        ],
-        'images' => [
-            'label' => __('Images'),
-            'type' => Mystique::IMAGE
         ]
     ]
 ];

@@ -22,6 +22,8 @@ class Mystique extends WireData implements Module {
 
     const CHECKBOX = 'InputfieldCheckbox';
 
+    const TOGGLE = 'InputfieldToggle';
+
     const TOGGLE_CHECKBOX = 'InputfieldToggleCheckbox';
 
     const SELECT = 'InputfieldSelect';
@@ -36,11 +38,10 @@ class Mystique extends WireData implements Module {
 
     const COLOR = 'InputfieldColor';
 
-    /* @var Mystique $instance */
-    public static $instance;
-
-    /* @var array $paths Resources paths */
-    protected static $paths = [];
+    /**
+     * @var array $resources
+     */
+    public $resources = [];
 
     /**
      * @inheritdoc
@@ -50,7 +51,7 @@ class Mystique extends WireData implements Module {
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => 6,
+            'version' => 7,
             'summary' => __('Mystique is a config file based field creation module for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -73,32 +74,12 @@ class Mystique extends WireData implements Module {
 
     /**
      * @inheritDoc
-     *
-     * @return Mystique
-     */
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
-     * @inheritDoc
      */
     public function __construct()
     {
-        self::$paths = new FilenameArray();
-    }
+        parent::__construct();
 
-    /**
-     * @inheritDoc
-     */
-    public function init()
-    {
-        // Add default paths
-        self::add(__DIR__ . DIRECTORY_SEPARATOR . 'configs' . DIRECTORY_SEPARATOR);
-        self::add($this->config->paths->templates . 'configs' . DIRECTORY_SEPARATOR);
+        $this->wire('classLoader')->addNamespace('Altivebir\TemplateFieldManager', __DIR__ . '/src');
     }
 
     /**
@@ -106,73 +87,115 @@ class Mystique extends WireData implements Module {
      */
     public function ready()
     {
+        $paths = array_merge($this->finder($this->config->paths->siteModules), $this->finder($this->config->paths->templates . "configs" . DIRECTORY_SEPARATOR));
+        
+        foreach ($paths as $file) {
 
-    }
+            $dirname = dirname(dirname($file));
+            $base = strtolower(str_replace([dirname(dirname(dirname($file))), "/", "\\"], "", $dirname));
+            $name = str_replace([dirname($file), "/", "\\", "Mystique.", ".php"], "", $file);
 
-    public static function add($path)
-    {
-        $path = $path . self::getInstance()->className . '.*.php';
-        self::$paths->add($path);
+            $this->resources[$base][$name] = $file;
+        }
     }
 
     /**
-     * Get all added resources paths
-     *
-     * @return array
-     */
-    public static function getResourcesPaths()
-    {
-        $resources = [];
+	 * Finder: find config files for module
+	 *
+	 * @param string $path
+	 * @param string $filter
+	 * 
+	 * @return array
+	 */
+	protected function finder(string $path, $filter = "configs/Mystique.")
+	{
+		$paths = array();
 
-        $paths = [];
-        foreach (self::$paths as $path) {
-            $paths[] = $path;
-        }
+		foreach($this->files->find($path, ["extensions" => ["php"]]) as $path) {
+			if ($filter && strpos($path, $filter) === false) {
+				continue;
+			}
 
-        $paths = glob('{' . implode(',', $paths) . '}', GLOB_BRACE);
-        foreach ($paths as $k => $path) {
-            $name = str_replace([realpath($path), self::getInstance()->className . '.', '.php'], '', basename($path));
-            $resources[$name] = $path;
-        }
+			$paths[] = $path;
+		}
 
-        return $resources;
+		return $paths;
     }
 
     /**
-     * Get resource data from resources
+     * Get resource data
      *
      * @param string $name
-     * @return array|mixed
+     * @param string $name
+     * @param boolean $json
+     *
+     * @return array|string
      */
-    public static function getResource(string $name)
+    public function resource($name = "", $base = "", $json = false)
     {
-        $resources = self::getResourcesPaths();
-        if(array_key_exists($name, $resources)) {
-            $path = $resources[$name];
-            if(file_exists($path)) {
-                $resource = include $path;
-                $resource['__name'] = $name;
-                $resource['__path'] = $path;
-                return $resource;
+        if (strpos($name, ".") !== false) {
+            $explode = explode(".", $name);
+
+            if (isset($this->resources[$explode[0]])) {
+                $base = $explode[0];
+            }
+
+            $name = $explode[1];
+        }
+
+        $data = [
+            "__id" => "",
+            "__base" => "",
+            "__name" => "",
+            "__title" => "",
+            "__type" => "",
+            "__path" => "",
+            "__data" => ""
+        ];
+
+        if ($base && $name) {
+
+            if (isset($this->resources[$base]) && isset($this->resources[$base][$name]) && file_exists($this->resources[$base][$name])) {
+                
+                $resource = include $this->resources[$base][$name];
+                
+                // be sure we have fields inside resource array
+                if (is_array($resource) && isset($resource["fields"]) && is_array($resource["fields"])) {
+                    
+                    $title = isset($resource["title"]) ? $resource["title"] : $name;
+    
+                    $data["__id"] = $base . "." . $name;
+                    $data["__base"] = $base;
+                    $data["__name"] = $name;
+                    $data["__title"] = $title;
+                    $data["__type"] = "file";
+                    $data["__path"] = $this->resources[$base][$name];
+                    $data["__data"] = $resource;
+
+                }
             }
         }
 
-        return [];
+        return $json ? json_encode($data, true) : $data;
     }
 
     /**
-     * Get all resources data from resources paths
+     * Get all resources data
      *
-     * @return array
+     * @param bool $json
+     *
+     * @return array|string
      */
-    public static function getResources()
+    public function resources($json = false)
     {
         $resources = [];
-        $resourcesPaths = self::getResourcesPaths();
-        foreach ($resourcesPaths as $name => $path) {
-            $resources[$name] = self::getResource($name);
+
+        foreach ($this->resources as $base => $sources) {
+            foreach ($sources as $name => $data) {
+                $resources[$base . "." . $name] = $this->resource($name, $base, $json);
+            }
         }
 
-        return $resources;
+        return $json ? json_encode($resources, true) : $resources;
     }
 }

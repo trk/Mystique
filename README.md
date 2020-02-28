@@ -36,10 +36,11 @@ git clone https://github.com/trk/Mystique.git
 This mean if you `remove a field` from your `config file`, field will be removed from edit screen. As you see on `youtube video`.
 
 
-#### Using `Mystique` with your module or use different `configs path`, `autoload` need to be `true` for modules
+#### ~~Using `Mystique` with your module or use different `configs path`, `autoload` need to be `true` for modules~~
 
-Default configs path is `site/templates/configs/`, and your config file name need to start with `Mystique.` and need to end with `.php` extension.
+~~Default configs path is `site/templates/configs/`, and your config file name need to start with `Mystique.` and need to end with `.php` extension.~~
 
+### _Adding custom path not supporting anymore !_
 ```php
 // Add your custom path inside your module class`init` function, didn't tested outside
 public function init()
@@ -49,10 +50,12 @@ public function init()
 }
 ```
 
-All config files need to return a `php array` like examples. 
+### Mystique module will search `site/modules/**/configs/Mystique.*.php` and `site/templates/Mystique.*.php` paths for `Mystique` config files.
+
+All config files need to return a `PHP ARRAY` like examples. 
 
 
-##### Same as ProcessWire Inputfield Api, only difference is `set` and `showIf` usage
+#### Usage almost same with ProcessWire Inputfield Api, only difference is `set` and `showIf` usage like on example.
 
 ```php
 <?php
