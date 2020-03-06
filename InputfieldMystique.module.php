@@ -43,7 +43,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => 7,
+            'version' => 8,
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -210,6 +210,13 @@ class InputfieldMystique extends Inputfield
 
         return $this;
     }
+
+    public function ___getConfigAllowContext($field) {
+        $fields = parent::___getConfigAllowContext($field);
+        $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
+        
+        return $fields;
+	}
 
     /**
      * @inheritdoc
