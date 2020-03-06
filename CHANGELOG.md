@@ -1,11 +1,16 @@
 # Release notes for Mystique Module
 
-- remove `Mystique::add()` method
-- remove all `static` methods
-- add `search` for finding `Mystique` config files
-- update `MystiqueFormManager` and `MystiqueValue` classes
+- add support for overwrite input field configs
 
-## -next
+## v.0.0.8
+
+- add finder function for different operation systems
+
+## v.0.0.7
+
+- 
+
+## v.0.0.6
 
 - rename `getResources()` as `resources($json = false)`
 - rename `getResource($name = '')` as `resource($name = '', $json = false)`
