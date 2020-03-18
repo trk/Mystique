@@ -1,5 +1,9 @@
 # Release notes for Mystique Module
 
+- add support for `$page->setAndSave('yourfield', ['foo'=>'bar']);`
+
+## v.0.0.9
+
 - add support for overwrite input field configs
 
 ## v.0.0.8
