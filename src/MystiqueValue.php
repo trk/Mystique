@@ -137,10 +137,32 @@ class MystiqueValue extends WireData
     }
 
     /**
+     * Return data as array
+     *
+     * @return array
+     */
+    public function array(): array
+    {
+        return $this->data;
+    }
+
+    /**
+     * Return data as string
+     *
      * @return string
      */
-    public function __toString()
+    public function json(): string
     {
-        return '';
+        return json_encode($this->array());
+    }
+
+    /**
+     * Return json data as string
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->json();
     }
 }

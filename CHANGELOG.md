@@ -1,5 +1,9 @@
 # Release notes for Mystique Module
 
+- add support for `$page->mystiqueField->array();` and `$page->mystiqueField->json();`
+
+## v.0.0.10
+
 - add support for `$page->setAndSave('yourfield', ['foo'=>'bar']);`
 
 ## v.0.0.9
