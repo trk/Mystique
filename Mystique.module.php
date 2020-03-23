@@ -95,6 +95,10 @@ class Mystique extends WireData implements Module {
             $base = strtolower(str_replace([dirname(dirname(dirname($file))), "/", "\\"], "", $dirname));
             $name = str_replace([dirname($file), "/", "\\", "Mystique.", ".php"], "", $file);
 
+            if (substr($base, 0, 1 ) === ".") {
+                continue;
+            }
+            
             $this->resources[$base][$name] = $file;
         }
     }
