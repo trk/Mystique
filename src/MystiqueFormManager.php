@@ -56,8 +56,8 @@ class MystiqueFormManager extends Wire
     /* @var Page $page */
     public $page;
 
-    /* @var MystiqueValue $values */
-    protected $values = null;
+    /* @var array $values */
+    protected $values = [];
 
     /**
      * @inheritDoc
@@ -155,7 +155,7 @@ class MystiqueFormManager extends Wire
      */
     public function build(MystiqueValue $value)
     {
-        $this->values = $value;
+        $this->values = $value instanceof MystiqueValue ? $value->array() : [];
         
         $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
 
@@ -252,13 +252,13 @@ class MystiqueFormManager extends Wire
 
         if(!$type != Mystique::FIELDSET && !$type != Mystique::MARKUP) {
             $value = '';
-            if(!$this->values) {
+            if(!count($this->values)) {
                 $value = array_key_exists('value', $field) ? $field['value'] : '';
                 if(!$value && array_key_exists('defaultValue', $field)) {
                     $value = $field['defaultValue'];
                 }
-            } elseif($this->values instanceof MystiqueValue && $this->values->get($name)) {
-                $value = $this->values->get($name);
+            } elseif(isset($this->values[$name])) {
+                $value = $this->values[$name];
             }
 
             if(array_key_exists('useLanguages', $field) && $field['useLanguages']) {
@@ -266,8 +266,8 @@ class MystiqueFormManager extends Wire
                     if ($language->isDefault()) {
                         continue;
                     }
-                    if ($this->values instanceof MystiqueValue && $this->values->get($name . $language->id)) {
-                        $inputField->attr("value{$language->id}", $this->values->get($name . $language->id));
+                    if (isset($this->values[$name.$language->id])) {
+                        $inputField->attr("value{$language->id}", $this->values[$name.$language->id]);
                     }
                 }
             }
