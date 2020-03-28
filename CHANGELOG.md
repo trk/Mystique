@@ -2,6 +2,12 @@
 
 ### Fixed
 
+- Fix getting overwritten inputfield config values
+
+## v.0.0.12
+
+### Fixed
+
 - Fix set language value for admin side
 - Fix don't check folders if name start with "." dot
 
