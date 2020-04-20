@@ -2,6 +2,12 @@
 
 ### Fixed
 
+- Fix template context save
+
+## v.0.0.13
+
+### Fixed
+
 - Fix getting overwritten inputfield config values
 
 ## v.0.0.12
