@@ -2,6 +2,12 @@
 
 ### Fixed
 
+- Fix template context save, is current page null or not ?
+
+## v.0.0.14
+
+### Fixed
+
 - Fix template context save
 
 ## v.0.0.13

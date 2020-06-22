@@ -22,7 +22,7 @@ class FieldtypeMystique extends Fieldtype
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.13',
+            'version' => '0.0.14',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -68,7 +68,9 @@ class FieldtypeMystique extends Fieldtype
      */
     public function getBlankValue(Page $page, Field $field)
     {
-        return new MystiqueValue($page, $page->template->fieldgroup->getField($field,true));
+        $field = $page->id ? $page->template->fieldgroup->getField($field, true) : $field;
+
+        return new MystiqueValue($page, $field);
     }
 
     /**
