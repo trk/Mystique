@@ -7,10 +7,13 @@ namespace ProcessWire;
  *
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
+ * 
+ * @var bool $useGlob
  *
  * @package Altivebir\Mystique
  */
-class Mystique extends WireData implements Module {
+class Mystique extends WireData implements Module, ConfigurableModule
+{
 
     const FIELDSET = 'InputfieldFieldset';
 
@@ -51,7 +54,7 @@ class Mystique extends WireData implements Module {
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.14',
+            'version' => '0.0.15',
             'summary' => __('Mystique is a config file based field creation module for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -80,6 +83,8 @@ class Mystique extends WireData implements Module {
         parent::__construct();
 
         $this->wire('classLoader')->addNamespace('Altivebir\TemplateFieldManager', __DIR__ . '/src');
+
+        $this->set('useGlob', '');
     }
 
     /**
@@ -113,15 +118,19 @@ class Mystique extends WireData implements Module {
 	 */
 	protected function finder(string $path, $filter = "configs/Mystique.")
 	{
-		$paths = array();
+        if ($this->useGlob) {
+            $paths = glob('{' . $this->config->paths->templates . $filter. '*.php,' . $this->config->paths->siteModules . '*/' . $filter . '*.php}', GLOB_BRACE | GLOB_NOSORT);
+        } else {
+            $paths = array();
 
-		foreach($this->files->find($path, ["extensions" => ["php"]]) as $path) {
-			if ($filter && strpos($path, $filter) === false) {
-				continue;
-			}
+            foreach($this->files->find($path, ["extensions" => ["php"]]) as $path) {
+                if ($filter && strpos($path, $filter) === false) {
+                    continue;
+                }
 
-			$paths[] = $path;
-		}
+                $paths[] = $path;
+            }
+        }
 
 		return $paths;
     }
@@ -202,4 +211,30 @@ class Mystique extends WireData implements Module {
 
         return $json ? json_encode($resources, true) : $resources;
     }
+
+    /**
+     * Return an InputfieldWrapper of Inputfields used to configure the class
+     *
+     * @param array $data Array of config values indexed by field name
+     * 
+     * @return InputfieldsWrapper
+     *
+     */
+    public function getModuleConfigInputfields(array $data) {
+        
+        $wrapper = new InputfieldWrapper();
+
+        /**
+         * @var InputfieldCheckbox $checkbox
+         */
+        $checkbox = wire('modules')->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'useGlob');
+        $checkbox->set('label', 'Finder method');
+        $checkbox->set('checkboxLabel', __('Use `glob` method for find config files'));
+        $checkbox->attr('checked', $this->useGlob ? 'checked' : '');
+
+        $wrapper->add($checkbox);
+        
+		return $wrapper;
+	}
 }

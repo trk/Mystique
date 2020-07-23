@@ -1,5 +1,11 @@
 # Release notes for Mystique Module
 
+### Added
+
+- Module config `useGlob` for find config files
+
+## v.0.0.15
+
 ### Fixed
 
 - Fix template context save, is current page null or not ?
