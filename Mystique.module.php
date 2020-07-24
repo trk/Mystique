@@ -90,7 +90,7 @@ class Mystique extends WireData implements Module, ConfigurableModule
     /**
      * @inheritDoc
      */
-    public function ready()
+    public function init()
     {
         $paths = array_merge($this->finder($this->config->paths->siteModules), $this->finder($this->config->paths->templates . "configs" . DIRECTORY_SEPARATOR));
         
