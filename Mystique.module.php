@@ -7,12 +7,10 @@ namespace ProcessWire;
  *
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
- * 
- * @var bool $useGlob
  *
  * @package Altivebir\Mystique
  */
-class Mystique extends WireData implements Module, ConfigurableModule
+class Mystique extends WireData implements Module
 {
 
     const FIELDSET = 'InputfieldFieldset';
@@ -42,9 +40,9 @@ class Mystique extends WireData implements Module, ConfigurableModule
     const COLOR = 'InputfieldColor';
 
     /**
-     * @var array $resources
+     * @var array
      */
-    public $resources = [];
+    protected $resources = [];
 
     /**
      * @inheritdoc
@@ -54,7 +52,7 @@ class Mystique extends WireData implements Module, ConfigurableModule
     public static function getModuleInfo() {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.15',
+            'version' => '0.0.16',
             'summary' => __('Mystique is a config file based field creation module for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -82,159 +80,114 @@ class Mystique extends WireData implements Module, ConfigurableModule
     {
         parent::__construct();
 
-        $this->wire('classLoader')->addNamespace('Altivebir\TemplateFieldManager', __DIR__ . '/src');
+        $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->set('useGlob', '');
-    }
+        $files = $this->glob([
+            $this->config->paths->siteModules . '*/configs/mystique.*.php',
+            $this->config->paths->siteModules . '*/configs/Mystique.*.php',
+            $this->config->paths->templates . 'configs/mystique.*.php',
+            $this->config->paths->templates . 'configs/Mystique.*.php'
+        ]);
 
-    /**
-     * @inheritDoc
-     */
-    public function init()
-    {
-        $paths = array_merge($this->finder($this->config->paths->siteModules), $this->finder($this->config->paths->templates . "configs" . DIRECTORY_SEPARATOR));
-        
-        foreach ($paths as $file) {
+        foreach ($files as $file) {
+            $base = strtolower(strtr(dirname(dirname($file)), [
+                dirname(dirname(dirname($file))) => '',
+                '/' => '',
+                '\\' => ''
+            ]));
 
-            $dirname = dirname(dirname($file));
-            $base = strtolower(str_replace([dirname(dirname(dirname($file))), "/", "\\"], "", $dirname));
-            $name = str_replace([dirname($file), "/", "\\", "Mystique.", ".php"], "", $file);
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+            $name = strtr(basename($file), [
+                'Mystique.' => '',
+                'mystique.' => '',
+                '.' => '',
+                $ext => ''
+            ]);
 
-            if (substr($base, 0, 1 ) === ".") {
-                continue;
-            }
-            
-            $this->resources[$base][$name] = $file;
+            $this->resources[$base][$name] = [
+                'base' => $base,
+                'name' => $name,
+                'ext' => $ext,
+                'path' => $file,
+                'data' => []
+            ];
         }
     }
 
     /**
-	 * Finder: find config files for module
-	 *
-	 * @param string $path
-	 * @param string $filter
-	 * 
-	 * @return array
-	 */
-	protected function finder(string $path, $filter = "configs/Mystique.")
-	{
-        if ($this->useGlob) {
-            $paths = glob('{' . $this->config->paths->templates . $filter. '*.php,' . $this->config->paths->siteModules . '*/' . $filter . '*.php}', GLOB_BRACE | GLOB_NOSORT);
-        } else {
-            $paths = array();
-
-            foreach($this->files->find($path, ["extensions" => ["php"]]) as $path) {
-                if ($filter && strpos($path, $filter) === false) {
-                    continue;
-                }
-
-                $paths[] = $path;
-            }
-        }
-
-		return $paths;
+     * List of resources
+     *
+     * @return array
+     */
+    public function getResources(): array
+    {
+        return $this->resources;
     }
 
     /**
-     * Get resource data
+     * Get resource and load resource data
      *
-     * @param string $name
-     * @param string $name
-     * @param boolean $json
-     *
-     * @return array|string
+     * @param string $path
+     * 
+     * @return array
      */
-    public function resource($name = "", $base = "", $json = false)
+    public function getResource(string $name, string $base = '')
     {
-        if (strpos($name, ".") !== false) {
-            $explode = explode(".", $name);
-
-            if (isset($this->resources[$explode[0]])) {
-                $base = $explode[0];
-            }
-
+        if (!$base && strpos($name, '.') !== false) {
+            $explode = explode('.', $name);
             $name = $explode[1];
+            $base = $explode[0];
         }
 
-        $data = [
-            "__id" => "",
-            "__base" => "",
-            "__name" => "",
-            "__title" => "",
-            "__type" => "",
-            "__path" => "",
-            "__data" => ""
+        $resource = [
+            'base' => $base,
+            'name' => $name,
+            'ext' => '',
+            'path' => '',
+            'data' => [
+                'name' => 'Resource not found',
+                'fields' => []
+            ]
         ];
 
-        if ($base && $name) {
-
-            if (isset($this->resources[$base]) && isset($this->resources[$base][$name]) && file_exists($this->resources[$base][$name])) {
-                
-                $resource = include $this->resources[$base][$name];
-                
-                // be sure we have fields inside resource array
-                if (is_array($resource) && isset($resource["fields"]) && is_array($resource["fields"])) {
-                    
-                    $title = isset($resource["title"]) ? $resource["title"] : $name;
-    
-                    $data["__id"] = $base . "." . $name;
-                    $data["__base"] = $base;
-                    $data["__name"] = $name;
-                    $data["__title"] = $title;
-                    $data["__type"] = "file";
-                    $data["__path"] = $this->resources[$base][$name];
-                    $data["__data"] = $resource;
-
+        if (isset($this->resources[$base][$name])) {
+            $resource = $this->resources[$base][$name];            
+            if (file_exists($resource['path'])) {
+                if ($resource['ext'] == 'json') {
+                    $resource['data'] = json_decode(file_get_contents($resource['path']), true);
+                } else {
+                    $resource['data'] = require $resource['path'];
                 }
             }
         }
 
-        return $json ? json_encode($data, true) : $data;
+        return $resource;
     }
 
     /**
-     * Get all resources data
+     * Glob files with braces support.
      *
-     * @param bool $json
+     * @param array $paths
+     * @param int $flags
      *
-     * @return array|string
+     * @return array
      */
-    public function resources($json = false)
+    protected function glob(array $paths, $flags = 0): array
     {
-        $resources = [];
+        if (defined('GLOB_BRACE')) {
+                
+            $pattern = '{' . implode(',', $paths) . '}';
 
-        foreach ($this->resources as $base => $sources) {
-            foreach ($sources as $name => $data) {
-                $resources[$base . "." . $name] = $this->resource($name, $base, $json);
+            $files = glob($pattern, $flags | GLOB_BRACE | GLOB_NOSORT);
+        } else {
+
+            $files = [];
+
+            foreach ($paths as $path) {
+                $files = array_merge($files, glob($path, $flags | GLOB_NOSORT) ?: []);
             }
         }
 
-        return $json ? json_encode($resources, true) : $resources;
+        return $files;
     }
-
-    /**
-     * Return an InputfieldWrapper of Inputfields used to configure the class
-     *
-     * @param array $data Array of config values indexed by field name
-     * 
-     * @return InputfieldsWrapper
-     *
-     */
-    public function getModuleConfigInputfields(array $data) {
-        
-        $wrapper = new InputfieldWrapper();
-
-        /**
-         * @var InputfieldCheckbox $checkbox
-         */
-        $checkbox = wire('modules')->get('InputfieldCheckbox');
-        $checkbox->attr('name', 'useGlob');
-        $checkbox->set('label', 'Finder method');
-        $checkbox->set('checkboxLabel', __('Use `glob` method for find config files'));
-        $checkbox->attr('checked', $this->useGlob ? 'checked' : '');
-
-        $wrapper->add($checkbox);
-        
-		return $wrapper;
-	}
 }

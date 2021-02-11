@@ -67,7 +67,8 @@ class MystiqueValue extends WireData
             if($this->field->useJson && $this->field->jsonString) {
                 $resource = json_decode($field->jsonString, true);
             } else {
-                $resource =  $this->Mystique->resource($this->field->resource);
+                // $resource =  $this->Mystique->resource($this->field->resource);
+                $resource =  $this->Mystique->getResource($this->field->resource);
             }
 
             // Set default values

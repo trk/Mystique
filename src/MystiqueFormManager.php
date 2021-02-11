@@ -77,15 +77,15 @@ class MystiqueFormManager extends Wire
         if($this->field->useJson && $this->field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource =  $this->Mystique->resource($this->field->resource);
+            $resource =  $this->Mystique->getResource($this->field->resource);
         }
 
-        $this->resourceName = isset($resource['__name']) ? $resource['__name'] : '';
-        $this->resourcePath = isset($resource['__path']) ? $resource['__path'] : '';
+        $this->resourceName = isset($resource['name']) ? $resource['name'] : '';
+        $this->resourcePath = isset($resource['path']) ? $resource['path'] : '';
         $this->resourceJSON = json_encode($resource);
         $this->resource = $resource;
 
-        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+        $fields = isset($this->resource["data"]) && isset($this->resource["data"]["fields"]) ? $this->resource["data"]["fields"] : [];
 
         $this->setFields($fields);
     }
@@ -144,32 +144,30 @@ class MystiqueFormManager extends Wire
             }
         }
     }
-
+    
     /**
      * Build fields for render form
      *
      * @param MystiqueValue $value
-     * @return \ProcessWire\_Module|\ProcessWire\Module|null
-     * @throws \ProcessWire\WireException
-     * @throws \ProcessWire\WirePermissionException
+     * 
+     * @return InputfieldWrapper
      */
     public function build(MystiqueValue $value)
     {
         $this->values = $value instanceof MystiqueValue ? $value->array() : [];
         
-        $fields = isset($this->resource["__data"]) && isset($this->resource["__data"]["fields"]) ? $this->resource["__data"]["fields"] : [];
+        $fields = isset($this->resource["data"]["fields"]) ? $this->resource["data"]["fields"] : [];
 
         return $this->buildFields($fields, new InputfieldWrapper());
     }
-
+    
     /**
      * Build fields for render
      *
      * @param array $fields
-     * @param null $wrapper
-     * @return InputfieldFieldset|InputfieldWrapper|null
-     * @throws \ProcessWire\WireException
-     * @throws \ProcessWire\WirePermissionException
+     * @param InputfieldWrapper|null $wrapper
+     * 
+     * @return InputfieldWrapper
      */
     public function buildFields($fields = [], $wrapper = null)
     {

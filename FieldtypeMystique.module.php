@@ -19,10 +19,11 @@ class FieldtypeMystique extends Fieldtype
      *
      * @return array
      */
-    public static function getModuleInfo() {
+    public static function getModuleInfo()
+    {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.15',
+            'version' => '0.0.16',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -126,7 +127,8 @@ class FieldtypeMystique extends Fieldtype
     /**
      * {@inheritdoc}
      */
-    public function ___getConfigAllowContext($field) {
+    public function ___getConfigAllowContext($field)
+    {
         $fields = parent::___getConfigAllowContext($field);
         $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
         
@@ -144,36 +146,84 @@ class FieldtypeMystique extends Fieldtype
 
         $schema['keys']['data'] = 'FULLTEXT KEY `data` (`data`)';
 
+        if ($field->id) {
+            $this->updateDatabaseSchema($field, $schema);
+        }
+        
         return $schema;
     }
 
     /**
-     * @inheritdoc
+	 * Update the DB schema, if necessary
+	 * 
+	 * @param Field $field
+	 * @param array $schema
+	 *
+	 */
+    protected function updateDatabaseSchema(Field $field, array $schema)
+    {
+
+		$requiredVersion = 1; 
+		$schemaVersion = (int) $field->get('schemaVersion'); 
+
+		if($schemaVersion >= $requiredVersion) {
+			// already up-to-date
+			return;
+		}
+
+		if($schemaVersion == 0) {
+            $schemaVersion = 1; 
+			$database = $this->wire('database');
+			$table = $database->escapeTable($field->getTable());
+			$query = $database->prepare("SHOW TABLES LIKE '$table'"); 
+			$query->execute();
+			$row = $query->fetch(\PDO::FETCH_NUM); 
+			$query->closeCursor();
+			if (!empty($row)) {
+                $sql = "ALTER TABLE {$field->getTable()} MODIFY data LONGTEXT NOT NULL";
+                $query = $this->wire('database')->prepare($sql);
+                $query->execute();
+                $this->message("Updated {$field->getTable()} database for LONGTEXT storage", Notice::log);
+            }
+		}
+
+		$field->set('schemaVersion', $schemaVersion); 
+		$field->save();
+    }
+    
+    /**
+     * @inheritDoc
      *
      * @param DatabaseQuerySelect $query
      * @param string $table
      * @param string $subfield
      * @param string $operator
      * @param mixed $value
+     * 
      * @return DatabaseQuery|DatabaseQuerySelect
-     * @throws WireException
      */
     public function getMatchQuery($query, $table, $subfield, $operator, $value)
     {
-        if($subfield) {
-            $value = '"' . $subfield . '":"' . $value . '"';
-        }
-        $subfield = 'data';
-        $operator = '%=';
+        $database = $this->wire("database");
+
+		if(empty($subfield) || $subfield == "data") {
+			$path = '$.*';
+		} else {
+			$path = '$.' . $subfield;
+		}
+
+		$table = $database->escapeTable($table);
+        $value = $database->escapeStr($value);
         
-        if($this->wire('database')->isOperator($operator)) {
-            // if dealing with something other than address, or operator is native to SQL,
-            // then let Fieldtype::getMatchQuery handle it instead
-            return parent::getMatchQuery($query, $table, $subfield, $operator, $value);
+		if($operator == "=") {
+			$query->where("JSON_SEARCH({$table}.data, 'one', '$value', NULL, '$path') IS NOT NULL");			
+		} else if($operator == "*=" || $operator == "%=") {
+			$query->where("JSON_SEARCH({$table}.data, 'one', '%$value%', NULL, '$path') IS NOT NULL");			
+		} else if($operator == "^=") {
+			$query->where("JSON_SEARCH({$table}.data, 'one', '$value%', NULL, '$path') IS NOT NULL");			
+		} else if($operator == "$=") {
+			$query->where("JSON_SEARCH({$table}.data, 'one', '%$value', NULL, '$path') IS NOT NULL");			
         }
-        // if we get here, then we're performing either %= (LIKE and variations) or *= (FULLTEXT and variations)
-        $ft = new DatabaseQuerySelectFulltext($query);
-        $ft->match($table, $subfield, $operator, $value);
 
         return $query;
     }

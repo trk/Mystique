@@ -20,9 +20,9 @@ use Altivebir\Mystique\MystiqueValue;
 class InputfieldMystique extends Inputfield
 {
     /**
-     * @var Mystique $Mystique
+     * @var Mystique $module
      */
-    protected $Mystique;
+    protected $module;
 
     /**
      * @var InputfieldMystique
@@ -43,7 +43,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.15',
+            'version' => '0.0.16',
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -67,15 +67,17 @@ class InputfieldMystique extends Inputfield
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->Mystique = $this->wire("modules")->get("Mystique");
+        $this->module = $this->modules->get('Mystique');
 
-        $resource = "";
-
-        // get resources
-        $resources = $this->Mystique->resources();
-        if (count($resources)) {
-            $resource = reset($resources);
-            $resource = $resource["__id"];
+        $resource = '';
+        $bases = $this->module->getResources();
+        foreach ($bases as $base => $resources) {
+            if ($resource) {
+                continue;
+            }
+            foreach ($resources as $name => $resource) {
+                $resource = "{$base}.{$name}";
+            }
         }
 
         // Set default resource
@@ -140,11 +142,11 @@ class InputfieldMystique extends Inputfield
      */
 	public function ___render()
     {
-        /* @var MystiqueFormManager $manager */
+        /** @var MystiqueFormManager $manager */
         $manager = new MystiqueFormManager($this->field, $this->editedPage);
-        /* @var $wrapper InputfieldWrapper */
+        /** @var $wrapper InputfieldWrapper */
         $wrapper = $this->wire(new InputfieldWrapper());
-        /* @var $value MystiqueValue */
+        /** @var $value MystiqueValue */
         $value = $this->attr('value');
         // add fields with values to wrapper
         $wrapper->add($manager->build($value));
@@ -225,7 +227,7 @@ class InputfieldMystique extends Inputfield
     {
         $wrapper = parent::___getConfigInputfields();
 
-        /* @var InputfieldCheckbox $checkbox */
+        /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
         $checkbox->attr('name', 'useJson');
         $checkbox->set('label', $this->_('Use JSON string'));
@@ -234,7 +236,7 @@ class InputfieldMystique extends Inputfield
 
         $wrapper->append($checkbox);
 
-        /* @var InputfieldTextarea $textarea */
+        /** @var InputfieldTextarea $textarea */
         $textarea = $this->wire->modules->get('InputfieldTextarea');
         $textarea->attr('name', 'jsonString');
         $textarea->set('label', $this->_('JSON string'));
@@ -243,7 +245,7 @@ class InputfieldMystique extends Inputfield
 
         $wrapper->append($textarea);
 
-        /* @var InputfieldSelect $select */
+        /** @var InputfieldSelect $select */
         $select = $this->modules->get('InputfieldSelect');
         $select->attr('name', 'resource');
         $select->label = __('Resource');
@@ -251,14 +253,16 @@ class InputfieldMystique extends Inputfield
         $select->showIf = "useJson=''";
 
         // get resources
-        $resources = $this->Mystique->resources();
-        if (count($resources)) {
-            $resource = reset($resources);
+        $bases = $this->module->getResources();
+        if (count($bases)) {
+            foreach ($bases as $base => $resources) {
+                foreach ($resources as $name => $resource) {
+                    if (!$select->defaultValue) {
+                        $select->defaultValue = "{$base}.{$name}";
+                    }
 
-            $select->defaultValue = $resource["__id"];
-
-            foreach ($resources as $name => $resource) {
-                $select->addOption($resource["__id"], "{$resource['__title']} ({$resource['__base']})");
+                    $select->addOption("{$base}.{$name}", "{$name} ({$base})");    
+                }
             }
         }
 
