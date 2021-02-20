@@ -237,16 +237,37 @@ class MystiqueFormManager extends Wire
         $field['name'] = $this->buildPrefix($field['name']);
         unset($field['type']);
         foreach ($field as $property => $value) {
-            if($property != 'value') {
-                if(is_array($value) && $property == 'showIf') {
-                    $inputField->{$property} = $this->buildShowIF($value);
-                } else if(is_array($value) && $property == 'set' && count($value)) {
-                    foreach ($value as $prop => $val) {
-                        $inputField->set($prop, $val);
+            if (is_array($value) && $property == 'showIf') {
+                $conditions = [];
+                foreach ($value as $name => $condition) {
+                    if ($this->resource['prefix']) {
+                        $name = $this->resource['prefix'] . $name;
                     }
-                } else {
-                    $inputField->{$property} = $value;
+            
+                    if ($this->resource['suffix']) {
+                        $name = $name . $this->resource['suffix'];
+                    }
+                    $conditions[] = $name . $condition;
                 }
+                $inputField->{$property} = implode(',', $conditions);
+            } else if (is_array($value) && $property == 'set') {
+                foreach ($value as $prop => $val) {
+                    $inputField->set($prop, $val);
+                }
+            } else if (is_array($value) && $property == 'attrs') {
+                foreach ($value as $prop => $val) {
+                    $inputField->attr($prop, $val);
+                }
+            } else if ($property == 'attr') {
+                $inputField->attr($property, $value);
+            } else if (is_array($value) && $property == 'wrapAttrs') {
+                foreach ($value as $prop => $val) {
+                    $inputField->wrapAttr($prop, $val);
+                }
+            } else if ($property == 'wrapAttr') {
+                $inputField->wrapAttr($property, $value);
+            } else {
+                $inputField->{$property} = $value;
             }
         }
 
@@ -280,27 +301,6 @@ class MystiqueFormManager extends Wire
         }
 
         return $inputField;
-    }
-
-    /**
-     * Build showIf for array values
-     *
-     * @param $value
-     * @return string
-     */
-    public function buildShowIF($value)
-    {
-        $stringIF = '';
-        $separator = ', ';
-
-        $i = 1;
-        foreach ($value as $name => $condition) {
-            $x = $i++;
-            $stringIF .= $this->buildPrefix($name) . $condition;
-            if($x < count($value)) $stringIF .= $separator;
-        }
-
-        return $stringIF;
     }
 
     /**

@@ -2,6 +2,12 @@
 
 ### Added
 
+- `attrs`, `wrapAttrs` for multiple attributes, `attr`, `wrapAttr` for single attribute
+
+## v.0.0.16
+
+### Added
+
 - Module config `useGlob` for find config files
 
 ## v.0.0.15
