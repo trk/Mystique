@@ -240,14 +240,7 @@ class MystiqueFormManager extends Wire
             if (is_array($value) && $property == 'showIf') {
                 $conditions = [];
                 foreach ($value as $name => $condition) {
-                    if ($this->resource['prefix']) {
-                        $name = $this->resource['prefix'] . $name;
-                    }
-            
-                    if ($this->resource['suffix']) {
-                        $name = $name . $this->resource['suffix'];
-                    }
-                    $conditions[] = $name . $condition;
+                    $conditions[] = $this->buildPrefix($name) . $condition;
                 }
                 $inputField->{$property} = implode(',', $conditions);
             } else if (is_array($value) && $property == 'set') {
