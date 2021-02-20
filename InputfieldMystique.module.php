@@ -59,13 +59,13 @@ class InputfieldMystique extends Inputfield
     /**
      * @inheritDoc
      */
-	public function __construct()
+	public function __construct($module = null)
     {
 		parent::__construct();
         
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->module = $this->modules->get('FieldtypeMystique');
+        $this->module = $module ?: $this->modules->get('FieldtypeMystique');
 
         $resource = '';
 
@@ -164,21 +164,17 @@ class InputfieldMystique extends Inputfield
     {
         $page = $this->getEditedPage();
         $field = $this->getField();
+        $value = $this->attr('value');
 
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $this->module->loadResource($field->resource, $page, $field);
+            $resource = $this->module->loadResource($field->resource, $page, $field, $value);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
             return $this;
         }
-
-        /**
-         * @var MystiqueValue $value
-         */
-        $value = $this->attr('value');
 
         $form = new FormManager([
             'prefix' => $field->name . '_',
@@ -200,21 +196,17 @@ class InputfieldMystique extends Inputfield
     {
         $page = $this->getEditedPage();
         $field = $this->getField();
+        $mystiqueValue = $this->attr('value');
 
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $this->module->loadResource($field->resource, $page, $field);
+            $resource = $this->module->loadResource($field->resource, $page, $field, $mystiqueValue);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
             return $this;
         }
-
-        /**
-         * @var MystiqueValue $mystiqueValue
-         */
-        $mystiqueValue = $this->attr('value');
 
         $form = new FormManager([
             'prefix' => $field->name . '_',

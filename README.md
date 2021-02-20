@@ -52,7 +52,7 @@ namespace ProcessWire;
 /**
  * Resource: magic of mystique field
  */
-return function ($page = null, $field = null) {
+return function ($page = null, $field = null, $value = null) {
 
     $fields = [
         'hello' => [

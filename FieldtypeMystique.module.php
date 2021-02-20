@@ -60,14 +60,7 @@ class FieldtypeMystique extends Fieldtype
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $paths = join(',', array_filter([
-            $this->config->paths->templates,
-            $this->config->paths->siteModules . '*/',
-        ]));
-
-        $paths = "{{$paths}}configs/{Mystique.*.php,mystique.*.php,Mystique.*.json,mystique.*.json}";
-
-        $this->setResources($paths);
+        $this->setResources();
     }
 
     /**
@@ -75,8 +68,14 @@ class FieldtypeMystique extends Fieldtype
      *
      * @return void
      */
-    protected function setResources(string $paths)
+    protected function setResources()
     {
+        $paths = join(',', array_filter([
+            $this->config->paths->templates,
+            $this->config->paths->siteModules . '*/',
+        ]));
+
+        $paths = "{{$paths}}configs/{Mystique.*.php,mystique.*.php,Mystique.*.json,mystique.*.json}";
 
         $files = Finder::glob($paths);
 
@@ -166,7 +165,7 @@ class FieldtypeMystique extends Fieldtype
      * 
      * @return array
      */
-    public function loadResource(string $name, $page = null, $field = null): array
+    public function loadResource(string $name, $page = null, $field = null, $value = null): array
     {
         $resource = $this->getResource($name);
 
@@ -183,7 +182,7 @@ class FieldtypeMystique extends Fieldtype
                 $data = require $file;
 
                 if ($data instanceof Closure) {
-                    $data = $data($page, $field);
+                    $data = $data($page, $field, $value);
                 }
             }
 
@@ -208,7 +207,7 @@ class FieldtypeMystique extends Fieldtype
         /**
          * @var InputfieldMystique $inputField
          */
-        $inputField = $this->modules->get('InputfieldMystique');
+        $inputField = new InputfieldMystique($this);
         $inputField->setEditedPage($page);
         $inputField->setField($field);
 
