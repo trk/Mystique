@@ -2,6 +2,8 @@
 
 namespace ProcessWire;
 
+use Closure;
+use Altivebir\Mystique\Finder;
 use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
 
@@ -15,6 +17,16 @@ use Altivebir\Mystique\MystiqueValue;
  */
 class FieldtypeMystique extends Fieldtype
 {
+    /**
+     * @var string
+     */
+    protected $base = 'templates';
+
+    /**
+     * @var array
+     */
+    protected $resources = [];
+
     /**
      * @inheritdoc
      *
@@ -30,8 +42,10 @@ class FieldtypeMystique extends Fieldtype
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
             'requires' => [
                 'PHP>=7.0.0',
-                'ProcessWire>=3.0.0',
-                'Mystique'
+                'ProcessWire>=3.0.0'
+            ],
+            'instals' => [
+                'InputfieldMystique'
             ],
             'icon' => 'cogs'
         ];
@@ -45,6 +59,145 @@ class FieldtypeMystique extends Fieldtype
         parent::__construct();
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
+
+        $paths = join(',', array_filter([
+            $this->config->paths->templates,
+            $this->config->paths->siteModules . '*/',
+        ]));
+
+        $paths = "{{$paths}}configs/{Mystique.*.php,mystique.*.php,Mystique.*.json,mystique.*.json}";
+
+        $this->setResources($paths);
+    }
+
+    /**
+     * Get element resources
+     *
+     * @return void
+     */
+    protected function setResources(string $paths)
+    {
+
+        $files = Finder::glob($paths);
+
+        foreach ($files as $file) {
+            
+            $base = strtolower(strtr(dirname(dirname($file)), [
+                dirname(dirname(dirname($file))) => '',
+                DIRECTORY_SEPARATOR => ''
+            ]));
+
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            $name = strtolower(strtr($file, [
+                dirname($file) => '',
+                DIRECTORY_SEPARATOR => '',
+                'Mystique.' => '',
+                'mystique.' => '',
+                '.' . $ext => ''
+            ]));
+
+            $this->resources[$base][$name] = [
+                'path' => $file,
+                'caller' => $base . '.' . $name,
+                'base' => $base,
+                'name' => $name
+            ];
+        }
+    }
+
+    /**
+     * Get all resources as array list
+     *
+     * @return array
+     */
+    public function getResources(): array
+    {
+        return $this->resources;
+    }
+
+    /**
+     * Check and get element resource
+     *
+     * @param string $name
+     * 
+     * @return array
+     */
+    public function getResource(string $name): array
+    {
+        $base = '';
+
+        $explode = explode('.', $name);
+
+        if (isset($explode[1])) {
+            $base = $explode[0];
+            $name = $explode[1];
+        } else {
+            $base = $this->base;
+            $name = $name;
+        }
+
+        $resource = [
+            'path' => '',
+            'caller' => '',
+            'base' => '',
+            'name' => '',
+            'title' => '',
+            'fields' => []
+        ];
+
+        if ($base && $name) {
+            $resources = $this->getResources();
+
+            if (isset($resources[$base][$name])) {
+                $resource = array_merge($resource, $resources[$base][$name]);
+            }
+        }
+
+        return $resource;
+    }
+    
+    /**
+     * Load resource data
+     *
+     * @param string $name
+     * @param Page|null $page
+     * @param Field|null $field
+     * 
+     * @return array
+     */
+    public function loadResource(string $name, $page = null, $field = null): array
+    {
+        $resource = $this->getResource($name);
+
+        if ($resource['path']) {
+
+            $file = $resource['path'];
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            $data = [];
+
+            if ($ext == 'json') {
+                $data = json_decode(file_get_contents($file), true);
+            } else {
+                $data = require $file;
+
+                if ($data instanceof Closure) {
+                    $data = $data($page, $field);
+                }
+            }
+
+            if (isset($data['title']) && $data['title']) {
+                $resource['title'] = $data['title'];
+            }
+
+            $name = isset($data['name']) ? $data['name'] : basename($file);
+            $resource['title'] = $resource['title'] ?: $name;
+
+            $resource['fields'] = isset($data['fields']) && is_array($data['fields']) ? $data['fields'] : [];
+        }
+
+        return $resource;
     }
 
     /**
@@ -52,10 +205,12 @@ class FieldtypeMystique extends Fieldtype
      */
     public function getInputfield(Page $page, Field $field)
     {
-        /* @var InputfieldMystique $inputField */
-        $inputField = $this->wire('modules')->get('InputfieldMystique');
-        $inputField->setField($field);
+        /**
+         * @var InputfieldMystique $inputField
+         */
+        $inputField = $this->modules->get('InputfieldMystique');
         $inputField->setEditedPage($page);
+        $inputField->setField($field);
 
         return $inputField;
     }
@@ -72,15 +227,10 @@ class FieldtypeMystique extends Fieldtype
     {
         $field = $page->id ? $page->template->fieldgroup->getField($field, true) : $field;
 
-        /**
-         * @var Mystique
-         */
-        $mystique = $this->modules->get('Mystique');
-
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $mystique->loadResource($field->resource, $page, $field);
+            $resource = $this->loadResource($field->resource, $page, $field);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {

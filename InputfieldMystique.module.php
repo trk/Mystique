@@ -20,6 +20,11 @@ use Altivebir\Mystique\MystiqueValue;
 class InputfieldMystique extends Inputfield
 {
     /**
+     * @var FieldtypeMystique
+     */
+    protected $module;
+
+    /**
      * @var InputfieldMystique
      */
     private $field;
@@ -50,26 +55,21 @@ class InputfieldMystique extends Inputfield
             'icon' => 'cogs'
         ];
 	}
-
+    
     /**
-     * @inheritdoc
-     *
-     * @throws WireException
+     * @inheritDoc
      */
 	public function __construct()
     {
 		parent::__construct();
-
+        
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        /**
-         * @var Mystique
-         */
-        $mystique = $this->modules->get('Mystique');
+        $this->module = $this->modules->get('FieldtypeMystique');
 
         $resource = '';
 
-        foreach ($mystique->getResources() as $base => $resources) {
+        foreach ($this->module->getResources() as $base => $resources) {
 
             if ($resource) {
                 continue;
@@ -162,18 +162,13 @@ class InputfieldMystique extends Inputfield
      */
 	public function ___render()
     {
-        /**
-         * @var Mystique
-         */
-        $mystique = $this->modules->get('Mystique');
-
         $page = $this->getEditedPage();
         $field = $this->getField();
 
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $mystique->loadResource($field->resource, $page, $field);
+            $resource = $this->module->loadResource($field->resource, $page, $field);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
@@ -181,19 +176,17 @@ class InputfieldMystique extends Inputfield
         }
 
         /**
-         * @var MystiqueValue $mystiqueValue
+         * @var MystiqueValue $value
          */
-        $mystiqueValue = $this->attr('value');
+        $value = $this->attr('value');
 
         $form = new FormManager([
             'prefix' => $field->name . '_',
             'suffix' => '_' . $page->id,
             'fields' => $resource['fields']
-        ], $mystiqueValue->getArray());
+        ], $value->getArray());
         
-        $wrapper = $form->generateFields(new InputfieldWrapper());
-
-		return $wrapper->render();
+        return $form->generateFields(new InputfieldWrapper())->render();
 	}
 
     /**
@@ -205,18 +198,13 @@ class InputfieldMystique extends Inputfield
      */
     public function ___processInput(WireInputData $input)
     {
-        /**
-         * @var Mystique
-         */
-        $mystique = $this->modules->get('Mystique');
-
         $page = $this->getEditedPage();
         $field = $this->getField();
 
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $mystique->loadResource($field->resource, $page, $field);
+            $resource = $this->module->loadResource($field->resource, $page, $field);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
@@ -336,22 +324,17 @@ class InputfieldMystique extends Inputfield
         $select->required = true;
         $select->showIf = "useJson=''";
 
-        /**
-         * @var Mystique
-         */
-        $mystique = $this->modules->get('Mystique');
-
         $page = $this->getEditedPage();
         $field = $this->getField();
 
-        foreach ($mystique->getResources() as $base => $resources) {
+        foreach ($this->module->getResources() as $base => $resources) {
             foreach ($resources as $name => $resource) {
 
                 if (!$select->defaultValue) {
                     $select->defaultValue = $resource['caller'];
                 }
 
-                $resource = $mystique->loadResource($resource['caller'], $page, $field);
+                $resource = $this->module->loadResource($resource['caller'], $page, $field);
 
                 $select->addOption($resource['caller'], $resource['title']);
             }
