@@ -2,6 +2,7 @@
 
 namespace ProcessWire;
 
+use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
 
 /**
@@ -71,7 +72,26 @@ class FieldtypeMystique extends Fieldtype
     {
         $field = $page->id ? $page->template->fieldgroup->getField($field, true) : $field;
 
-        return new MystiqueValue($page, $field);
+        /**
+         * @var Mystique
+         */
+        $mystique = $this->modules->get('Mystique');
+
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
+        } else {
+            $resource = $mystique->loadResource($field->resource, $page, $field);
+        }
+
+        if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+            return new MystiqueValue();
+        }
+
+        $form = new FormManager([
+            'fields' => $resource['fields']
+        ]);
+
+        return new MystiqueValue($form->getValues());
     }
 
     /**

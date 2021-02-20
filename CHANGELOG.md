@@ -1,5 +1,17 @@
 # Release notes for Mystique Module
 
+### Removed
+
+-  `MystiqueFormManager` class
+
+### Added
+
+-  Return `Closure` support for Mystique `php` configs
+-  `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module
+-  `Finder` class for find `Mystique.*.php, mystique.*.php, Mystique.*.json, mystique.*.json` files
+
+## v.0.0.16
+
 ### Added
 
 - Module config `useGlob` for find config files

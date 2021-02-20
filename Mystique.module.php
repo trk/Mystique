@@ -2,6 +2,9 @@
 
 namespace ProcessWire;
 
+use Altivebir\Mystique\Finder;
+use Closure;
+
 /**
  * Class Mystique
  *
@@ -38,6 +41,11 @@ class Mystique extends WireData implements Module
     const ICON = 'InputfieldIcon';
 
     const COLOR = 'InputfieldColor';
+
+    /**
+     * @var string
+     */
+    protected $base = 'templates';
 
     /**
      * @var array
@@ -82,40 +90,52 @@ class Mystique extends WireData implements Module
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $files = $this->glob([
-            $this->config->paths->siteModules . '*/configs/mystique.*.php',
-            $this->config->paths->siteModules . '*/configs/Mystique.*.php',
-            $this->config->paths->templates . 'configs/mystique.*.php',
-            $this->config->paths->templates . 'configs/Mystique.*.php'
-        ]);
+        $this->setResources();
+    }
 
+    /**
+     * Get element resources
+     *
+     * @return void
+     */
+    protected function setResources()
+    {
+        $paths = join(',', array_filter([
+            $this->config->paths->templates,
+            $this->config->paths->siteModules . '*/',
+        ]));
+
+        $paths = "{{$paths}}configs/{Mystique.*.php,mystique.*.php,Mystique.*.json,mystique.*.json}";
+
+        $files = Finder::glob($paths);
         foreach ($files as $file) {
+            
             $base = strtolower(strtr(dirname(dirname($file)), [
                 dirname(dirname(dirname($file))) => '',
-                '/' => '',
-                '\\' => ''
+                DIRECTORY_SEPARATOR => ''
             ]));
 
             $ext = pathinfo($file, PATHINFO_EXTENSION);
-            $name = strtr(basename($file), [
+
+            $name = strtolower(strtr($file, [
+                dirname($file) => '',
+                DIRECTORY_SEPARATOR => '',
                 'Mystique.' => '',
                 'mystique.' => '',
-                '.' => '',
-                $ext => ''
-            ]);
+                '.' . $ext => ''
+            ]));
 
             $this->resources[$base][$name] = [
-                'base' => $base,
-                'name' => $name,
-                'ext' => $ext,
                 'path' => $file,
-                'data' => []
+                'caller' => $base . '.' . $name,
+                'base' => $base,
+                'name' => $name
             ];
         }
     }
 
     /**
-     * List of resources
+     * Get all resources as array list
      *
      * @return array
      */
@@ -125,69 +145,87 @@ class Mystique extends WireData implements Module
     }
 
     /**
-     * Get resource and load resource data
+     * Check and get element resource
      *
-     * @param string $path
+     * @param string $name
      * 
      * @return array
      */
-    public function getResource(string $name, string $base = '')
+    public function getResource(string $name): array
     {
-        if (!$base && strpos($name, '.') !== false) {
-            $explode = explode('.', $name);
-            $name = $explode[1];
+        $base = '';
+
+        $explode = explode('.', $name);
+
+        if (isset($explode[1])) {
             $base = $explode[0];
+            $name = $explode[1];
+        } else {
+            $base = $this->base;
+            $name = $name;
         }
 
         $resource = [
-            'base' => $base,
-            'name' => $name,
-            'ext' => '',
             'path' => '',
-            'data' => [
-                'name' => 'Resource not found',
-                'fields' => []
-            ]
+            'caller' => '',
+            'base' => '',
+            'name' => '',
+            'title' => '',
+            'fields' => []
         ];
 
-        if (isset($this->resources[$base][$name])) {
-            $resource = $this->resources[$base][$name];            
-            if (file_exists($resource['path'])) {
-                if ($resource['ext'] == 'json') {
-                    $resource['data'] = json_decode(file_get_contents($resource['path']), true);
-                } else {
-                    $resource['data'] = require $resource['path'];
-                }
+        if ($base && $name) {
+            $resources = $this->getResources();
+
+            if (isset($resources[$base][$name])) {
+                $resource = array_merge($resource, $resources[$base][$name]);
             }
         }
 
         return $resource;
     }
-
+    
     /**
-     * Glob files with braces support.
+     * Load resource data
      *
-     * @param array $paths
-     * @param int $flags
-     *
+     * @param string $name
+     * @param Page|null $page
+     * @param Field|null $field
+     * 
      * @return array
      */
-    protected function glob(array $paths, $flags = 0): array
+    public function loadResource(string $name, $page = null, $field = null): array
     {
-        if (defined('GLOB_BRACE')) {
-                
-            $pattern = '{' . implode(',', $paths) . '}';
+        $resource = $this->getResource($name);
 
-            $files = glob($pattern, $flags | GLOB_BRACE | GLOB_NOSORT);
-        } else {
+        if ($resource['path']) {
 
-            $files = [];
+            $file = $resource['path'];
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
 
-            foreach ($paths as $path) {
-                $files = array_merge($files, glob($path, $flags | GLOB_NOSORT) ?: []);
+            $data = [];
+
+            if ($ext == 'json') {
+                $data = json_decode(file_get_contents($file), true);
+            } else {
+                $data = require $file;
+
+                if ($data instanceof Closure) {
+                    $data = $data($page, $field);
+                }
             }
+
+            if (isset($data['title']) && $data['title']) {
+                $resource['title'] = $data['title'];
+            }
+
+            $name = isset($data['name']) ? $data['name'] : basename($file);
+            $resource['title'] = $resource['title'] ?: $name;
+
+            $resource['fields'] = isset($data['fields']) && is_array($data['fields']) ? $data['fields'] : [];
         }
 
-        return $files;
+        return $resource;
     }
+
 }
