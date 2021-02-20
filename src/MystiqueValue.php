@@ -41,11 +41,11 @@ class MystiqueValue extends WireData
      */
     public function get($key)
     {
-        if (in_array($key, $this->languageFields)) {
-            $user = $this->user;
-            $language = $user ? $user->language : null;
-            if($language instanceof Language && !$language->isDefault) {
-                return parent::get($key . $language->id);
+        if (in_array($key, $this->languageFields) && $this->user->language instanceof Language) {
+            if ($this->user->language->isDefault()) {
+                return parent::get($key);
+            } else {
+                return parent::get($key.$this->user->language->id);
             }
         }
 
