@@ -2,8 +2,8 @@
 
 namespace Altivebir\Mystique;
 
-use ProcessWire\Language;
 use ProcessWire\WireData;
+use ProcessWire\Language;
 
 /**
  * Class MystiqueValue

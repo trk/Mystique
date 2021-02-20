@@ -38,7 +38,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.17',
+            'version' => '0.0.16',
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -109,11 +109,31 @@ class InputfieldMystique extends Inputfield
     /**
      * @inheritDoc
      *
+     * @return Field
+     */
+    public function getField()
+    {
+        return $this->field;
+    }
+
+    /**
+     * @inheritDoc
+     *
      * @param Page $page
      */
     public function setEditedPage(Page $page)
     {
         $this->editedPage = $page;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return Page
+     */
+    public function getEditedPage()
+    {
+        return $this->editedPage;
     }
 
     /**
@@ -147,10 +167,13 @@ class InputfieldMystique extends Inputfield
          */
         $mystique = $this->modules->get('Mystique');
 
-        if($this->field->useJson && $this->field->jsonString) {
-            $resource = json_decode($this->field->jsonString, true);
+        $page = $this->getEditedPage();
+        $field = $this->getField();
+
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $mystique->loadResource($this->field->resource, $this->editedPage, $this->field);
+            $resource = $mystique->loadResource($field->resource, $page, $field);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
@@ -163,8 +186,8 @@ class InputfieldMystique extends Inputfield
         $mystiqueValue = $this->attr('value');
 
         $form = new FormManager([
-            'prefix' => $this->field->name . '_',
-            'suffix' => '_' . $this->editedPage->id,
+            'prefix' => $field->name . '_',
+            'suffix' => '_' . $page->id,
             'fields' => $resource['fields']
         ], $mystiqueValue->getArray());
         
@@ -187,10 +210,13 @@ class InputfieldMystique extends Inputfield
          */
         $mystique = $this->modules->get('Mystique');
 
-        if($this->field->useJson && $this->field->jsonString) {
-            $resource = json_decode($this->field->jsonString, true);
+        $page = $this->getEditedPage();
+        $field = $this->getField();
+
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
         } else {
-            $resource = $mystique->loadResource($this->field->resource, $this->editedPage, $this->field);
+            $resource = $mystique->loadResource($field->resource, $page, $field);
         }
 
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
@@ -203,49 +229,59 @@ class InputfieldMystique extends Inputfield
         $mystiqueValue = $this->attr('value');
 
         $form = new FormManager([
-            'prefix' => $this->field->name . '_',
-            'suffix' => '_' . $this->editedPage->id,
+            'prefix' => $field->name . '_',
+            'suffix' => '_' . $page->id,
             'fields' => $resource['fields']
         ], $mystiqueValue->getArray());
 
         $checkboxFields = $form->getCheckboxFields();
         $languageFields = $form->getLanguageFields();
         
-        // Loop all inputs and check posted data
-        foreach ($form->getValues() as $name => $value) {
-            $_name = $this->field->name . '_' . $name . '_' . $this->editedPage->id;
-            $value = $this->input->post->{$_name};
-            if(in_array($name, $checkboxFields)) {
-                if($value) {
-                    $mystiqueValue->set($name, '1');
-                } else {
-                    $mystiqueValue->set($name, '0');
-                }
-            } else if(in_array($name, $languageFields)) {
+        $post = $this->input->post;
+
+        $values = $form->getValues();
+
+        foreach ($form->getInputFields() as $name) {
+
+            $rename = $field->name . '_' . $name . '_' . $page->id;
+            $value = $post->get($rename);
+
+            if (in_array($name, $checkboxFields)) {
+
+                $values[$name] = $value ? 1 : 0;
+
+            } else if (in_array($name, $languageFields)) {
+
                 if ($value !== null) {
-                    $mystiqueValue->set($name, $value);
+                    $values[$name] = $value;
                 }
+
                 foreach ($this->wire('languages') ?: [] as $language) {
+
                     if ($language->isDefault()) {
                         continue;
                     }
-                    $value = $this->input->post->{$_name . '__' . $language->id};
-                    if ($value !== null) {
-                        $mystiqueValue->set($name . $language->id, $value);
+
+                    $val = $post->get($rename . '__' . $language->id);
+
+                    if ($val !== null) {
+                        $values[$name . $language->id] = $val;
                     }
+
                 }
+
             } else {
-                if ($value) {
-                    $mystiqueValue->set($name, $value);
-                } else {
-                    $mystiqueValue->set($name, '');
-                }
+
+                $values[$name] = $value ?: '';
+                
             }
         }
 
+        $mystiqueValue->setArray($values);
+
         if ($mystiqueValue->isChanged()) {
             $this->trackChange('value');
-            $this->editedPage->trackChange($this->attr('name'));
+            $page->trackChange($this->attr('name'));
         }
 
         $mystiqueValue->set('__resource', $resource);
@@ -296,6 +332,10 @@ class InputfieldMystique extends Inputfield
          * @var Mystique
          */
         $mystique = $this->modules->get('Mystique');
+
+        $page = $this->getEditedPage();
+        $field = $this->getField();
+
         foreach ($mystique->getResources() as $base => $resources) {
             foreach ($resources as $name => $resource) {
 
@@ -303,7 +343,7 @@ class InputfieldMystique extends Inputfield
                     $select->defaultValue = $resource['caller'];
                 }
 
-                $resource = $mystique->loadResource($resource['caller'], $this->editedPage, $this->field);
+                $resource = $mystique->loadResource($resource['caller'], $page, $field);
 
                 $select->addOption($resource['caller'], $resource['title']);
             }

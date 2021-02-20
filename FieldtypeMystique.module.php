@@ -24,7 +24,7 @@ class FieldtypeMystique extends Fieldtype
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.17',
+            'version' => '0.0.16',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -122,6 +122,7 @@ class FieldtypeMystique extends Fieldtype
 
         $data = $value ? json_decode($value, true) : [];
 
+
         foreach ($MystiqueValue as $name => $val) {
             $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : '';
         }
@@ -134,11 +135,10 @@ class FieldtypeMystique extends Fieldtype
      */
     public function ___sleepValue(Page $page, Field $field, $value)
     {
-        $MystiqueValue = $value;
-
-        if(!$MystiqueValue instanceof MystiqueValue) {
+        if(!$value instanceof MystiqueValue) {
             throw new WireException("Expecting an instance of MystiqueValue");
         }
+
         return [
             'data' => json_encode($value->getArray())
         ];

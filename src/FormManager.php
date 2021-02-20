@@ -43,6 +43,11 @@ class FormManager extends Wire
     /**
      * @var array
      */
+    protected $inputFields = [];
+
+    /**
+     * @var array
+     */
     protected $languageFields = [];
 
     /**
@@ -206,6 +211,7 @@ class FormManager extends Wire
                         }
 
                         $this->values[$name . $language->id] = $value ?: '';
+                        $field['value' . $language->id] = $value ?: '';
                     }
                 }
     
@@ -216,6 +222,8 @@ class FormManager extends Wire
                         $field['attrs']['checked'] = true;
                     }
                 }
+
+                $this->inputFields[] = $name;
             }
 
             if (isset($field['children'])) {
@@ -250,6 +258,16 @@ class FormManager extends Wire
     public function getCheckboxFields(): array
     {
         return $this->checkboxFields;
+    }
+
+    /**
+     * Return Input Fields
+     *
+     * @return array
+     */
+    public function getInputFields(): array
+    {
+        return $this->inputFields;
     }
 
     /**
@@ -371,10 +389,16 @@ class FormManager extends Wire
                 foreach ($value as $prop => $val) {
                     $input->attr($prop, $val);
                 }
-            } else if ($property == 'wrapAttr') {
+            } else if ($property == 'attr') {
+                $input->attr($property, $value);
+            } else if (is_array($value) && $property == 'wrapAttrs') {
                 foreach ($value as $prop => $val) {
                     $input->wrapAttr($prop, $val);
                 }
+            } else if ($property == 'wrapAttr') {
+                $input->wrapAttr($property, $value);
+            } else if (substr($property, 0, 5) === 'value') {
+                $input->attr($property, $value);
             } else {
                 $input->{$property} = $value;
             }
