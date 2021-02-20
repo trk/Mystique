@@ -289,7 +289,15 @@ class InputfieldMystique extends Inputfield
         return $this;
     }
 
-    public function ___getConfigAllowContext($field) {
+    /**
+     * @inheritDoc
+     *
+     * @param Field $field
+     * 
+     * @return void
+     */
+    public function ___getConfigAllowContext($field)
+    {
         $fields = parent::___getConfigAllowContext($field);
         $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
         

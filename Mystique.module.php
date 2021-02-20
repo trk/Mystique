@@ -57,7 +57,8 @@ class Mystique extends WireData implements Module
      *
      * @return array
      */
-    public static function getModuleInfo() {
+    public static function getModuleInfo()
+    {
         return [
             'title' => 'Mystique',
             'version' => '0.0.17',
