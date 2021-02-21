@@ -229,10 +229,14 @@ class FieldtypeMystique extends Fieldtype
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
+            $resource = $field->resource;
+        }
+
+        if ($resource) {
             $resource = $this->loadResource($field->resource, $page, $field);
         }
 
-        if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+        if (!is_array($resource) && !isset($resource['fields']) || !is_array($resource['fields'])) {
             return new MystiqueValue();
         }
 
