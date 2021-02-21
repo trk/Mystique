@@ -328,7 +328,7 @@ class InputfieldMystique extends Inputfield
 
                 $resource = $this->module->loadResource($resource['caller'], $page, $field);
 
-                $select->addOption($resource['caller'], $resource['title']);
+                $select->addOption($resource['caller'], $resource['title'] . ' (' . $resource['base'] . ')');
             }
         }
 
