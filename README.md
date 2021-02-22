@@ -33,14 +33,19 @@ git clone https://github.com/trk/Mystique.git
 
 #### Module in live reaction with your `Mystique config file`
 
-This mean if you `remove a field` from your `config file`, field will be removed from edit screen. As you see on `youtube video`.
+This mean if you `remove a field` from your `config file`, field will be removed from edit screen. As you see on `Youtube Video`.
 
-### Mystique module will search `site/modules/**/configs/{Mystique.*.php, mystique.*.php, mystique.*.json, Mystique.*.json}` and `site/templates/{Mystique.*.php, mystique.*.php, mystique.*.json, Mystique.*.json}` paths for `Mystique` config files.
+### Mystique module will check these paths for get `config` files
 
-All config files need to return a `PHP ARRAY` like examples. 
+- site/modules/*/configs/`{Mystique.*.php, mystique.*.php, mystique.*.json, Mystique.*.json}`
+- site/templates/configs/`{Mystique.*.php, mystique.*.php, mystique.*.json, Mystique.*.json}`
+
+All config files need to return a `Valid JSON Array` or `PHP array` like examples.
+
+If your config file return a `Closure`, `$page`, `$field` and `$value` will passed to your config
 
 
-#### Usage almost same with ProcessWire Inputfield Api, only difference is `set` and `showIf` usage like on example.
+#### Usage almost same with ProcessWire Inputfield Api, only difference is `attr`, `attrs`, `set`, `wrapAttr`, `wrapAttrs` and `showIf` usage like on example.
 
 - `site/modules/Mystique/configs/Mystique.magician.php`
 
