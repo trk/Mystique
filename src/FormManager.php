@@ -185,6 +185,13 @@ class FormManager extends Wire
 
                 $this->values[$name] = $value ?: '';
 
+                if ($type == 'InputfieldPage' && $value) {
+                    $pages = $this->pages->newPageArray();
+                    $pages->add($value);
+
+                    $value = $pages;
+                }
+
                 $field['value'] = $value;
 
                 if (isset($field['useLanguages']) && $field['useLanguages']) {
