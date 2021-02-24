@@ -23,16 +23,22 @@ class MystiqueValue extends WireData
     /**
      * @inheritDoc
      */
-    public function __construct(array $values = [], array $languageFields = [])
+    public function __construct($values, array $languageFields = [])
     {
         parent::__construct();
 
         $this->languageFields = $languageFields;
 
-        foreach ($values as $name => $value) {
-            
-            $this->set($name, $value);
+        if (is_string($values) && is_array(json_decode($values, true))) {
+            $values = json_decode($values, true);
+        }
 
+        if (is_array($values)) {
+            foreach ($values as $name => $value) {
+            
+                $this->set($name, $value);
+    
+            }
         }
     }
 

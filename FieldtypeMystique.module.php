@@ -182,6 +182,10 @@ class FieldtypeMystique extends Fieldtype
                 $data = require $file;
 
                 if ($data instanceof Closure) {
+                    if (!$page instanceof NullPage && $field instanceof Field && !$value) {
+                        $value = $this->___loadPageField($page, $field);
+                        $value = new MystiqueValue($value);
+                    }
                     $data = $data($page, $field, $value);
                 }
             }
