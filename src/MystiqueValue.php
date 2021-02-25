@@ -23,7 +23,7 @@ class MystiqueValue extends WireData
     /**
      * @inheritDoc
      */
-    public function __construct($values, array $languageFields = [])
+    public function __construct($values = null, array $languageFields = [])
     {
         parent::__construct();
 
