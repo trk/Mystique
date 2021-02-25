@@ -264,7 +264,7 @@ class InputfieldMystique extends Inputfield
             $page->trackChange($this->attr('name'));
         }
 
-        $mystiqueValue->set('__resource', $resource);
+        $mystiqueValue->set('__resource', $resource['caller']);
 
         return $this;
     }
