@@ -248,7 +248,7 @@ class FieldtypeMystique extends Fieldtype
             'fields' => $resource['fields']
         ]);
 
-        return new MystiqueValue($form->getValues(), $form->getLanguageFields());
+        return new MystiqueValue($form->getValues(), $form->getFieldTypes());
     }
 
     /**

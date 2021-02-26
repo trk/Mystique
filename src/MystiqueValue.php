@@ -18,16 +18,33 @@ class MystiqueValue extends WireData
     /**
      * @var array
      */
+    protected $inputFields;
+
+    /**
+     * @var array
+     */
     protected $languageFields;
+
+    /**
+     * @var array
+     */
+    protected $checkboxFields;
+
+    /**
+     * @var array
+     */
+    protected $pageFields;
 
     /**
      * @inheritDoc
      */
-    public function __construct($values = null, array $languageFields = [])
+    public function __construct($values = null, array $options = [])
     {
         parent::__construct();
 
-        $this->languageFields = $languageFields;
+        foreach (['inputFields', 'languageFields', 'checkboxFields', 'pageFields'] as $n) {
+            $this->{$n} = isset($options[$n]) && is_array($options[$n]) ? $options[$n] : [];
+        }
 
         if (is_string($values) && is_array(json_decode($values, true))) {
             $values = json_decode($values, true);
@@ -67,12 +84,57 @@ class MystiqueValue extends WireData
     }
 
     /**
-     * Get language fields
+     * Return field types
+     *
+     * @return array
+     */
+    public function getFieldTypes(): array
+    {
+        return [
+            'inputFields' => $this->getInputFields(),
+            'languageFields' => $this->getLanguageFields(),
+            'checkboxFields' => $this->getCheckboxFields(),
+            'pageFields' => $this->getPageFields()
+        ];
+    }
+
+    /**
+     * Return Input Fields
+     *
+     * @return array
+     */
+    public function getInputFields(): array
+    {
+        return $this->inputFields;
+    }
+
+    /**
+     * Return Language Fields
      *
      * @return array
      */
     public function getLanguageFields(): array
     {
         return $this->languageFields;
+    }
+
+    /**
+     * Return Checkbox Fields
+     *
+     * @return array
+     */
+    public function getCheckboxFields(): array
+    {
+        return $this->checkboxFields;
+    }
+
+    /**
+     * Return Page Fields
+     *
+     * @return array
+     */
+    public function getPageFields(): array
+    {
+        return $this->pageFields;
     }
 }

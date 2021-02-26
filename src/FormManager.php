@@ -58,6 +58,11 @@ class FormManager extends Wire
     /**
      * @var array
      */
+    protected $pageFields = [];
+
+    /**
+     * @var array
+     */
     protected $values = [];
 
     /**
@@ -186,6 +191,7 @@ class FormManager extends Wire
                 $this->values[$name] = $value ?: '';
 
                 if ($type == 'InputfieldPage' && $value) {
+                    $this->pageFields[] = $name;
                     $pages = $this->pages->newPageArray();
                     $pages->add($value);
 
@@ -258,13 +264,18 @@ class FormManager extends Wire
     }
 
     /**
-     * Return Checkbox Fields
+     * Return field types
      *
      * @return array
      */
-    public function getCheckboxFields(): array
+    public function getFieldTypes(): array
     {
-        return $this->checkboxFields;
+        return [
+            'inputFields' => $this->getInputFields(),
+            'languageFields' => $this->getLanguageFields(),
+            'checkboxFields' => $this->getCheckboxFields(),
+            'pageFields' => $this->getPageFields()
+        ];
     }
 
     /**
@@ -285,6 +296,26 @@ class FormManager extends Wire
     public function getLanguageFields(): array
     {
         return $this->languageFields;
+    }
+
+    /**
+     * Return Checkbox Fields
+     *
+     * @return array
+     */
+    public function getCheckboxFields(): array
+    {
+        return $this->checkboxFields;
+    }
+
+    /**
+     * Return Page Fields
+     *
+     * @return array
+     */
+    public function getPageFields(): array
+    {
+        return $this->pageFields;
     }
 
     /**
