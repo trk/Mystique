@@ -65,4 +65,14 @@ class MystiqueValue extends WireData
     {
         return parent::set($key, $value);
     }
+
+    /**
+     * Get language fields
+     *
+     * @return array
+     */
+    public function getLanguageFields(): array
+    {
+        return $this->languageFields;
+    }
 }
