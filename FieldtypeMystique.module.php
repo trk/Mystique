@@ -391,7 +391,13 @@ class FieldtypeMystique extends Fieldtype
 
 	$table = $database->escapeTable($table);
         $value = $database->escapeStr($value);
-        $like = strpos($operator, '!') === 0 ? 'NOT LIKE' : 'LIKE';
+        
+        $like = 'LIKE';
+        
+        if(strpos($operator, '!') === 0 && $operator !== '!=') {
+	    $like = 'NOT LIKE';
+	    $operator = ltrim($operator, '!');
+	}
 
         if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
             $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
