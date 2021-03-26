@@ -432,7 +432,7 @@ class FieldtypeMystique extends Fieldtype
         } else if (in_array($operator, ['#='])) {
 
         } else if (in_array($operator, ['^='])) {
-            
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '\{$value}%'");
         } else if (in_array($operator, ['%^='])) {
             $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
         } else if (in_array($operator, ['$='])) {
