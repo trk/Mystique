@@ -383,23 +383,64 @@ class FieldtypeMystique extends Fieldtype
     {
         $database = $this->wire("database");
 
-		if(empty($subfield) || $subfield == "data") {
-			$path = '$.*';
-		} else {
-			$path = '$.' . $subfield;
-		}
+	if(empty($subfield) || $subfield == "data") {
+		$path = '$.*';
+	} else {
+		$path = '$.' . $subfield;
+	}
 
-		$table = $database->escapeTable($table);
+	$table = $database->escapeTable($table);
         $value = $database->escapeStr($value);
-        
-		if($operator == "=") {
-			$query->where("JSON_SEARCH({$table}.data, 'one', '$value', NULL, '$path') IS NOT NULL");			
-		} else if($operator == "*=" || $operator == "%=") {
-			$query->where("JSON_SEARCH({$table}.data, 'one', '%$value%', NULL, '$path') IS NOT NULL");			
-		} else if($operator == "^=") {
-			$query->where("JSON_SEARCH({$table}.data, 'one', '$value%', NULL, '$path') IS NOT NULL");			
-		} else if($operator == "$=") {
-			$query->where("JSON_SEARCH({$table}.data, 'one', '%$value', NULL, '$path') IS NOT NULL");			
+        $like = strpos($operator, '!') === 0 ? 'NOT LIKE' : 'LIKE';
+
+        if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
+        } else if (in_array($operator, ['%='])) {
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}%'");
+        } else if (in_array($operator, ['~|%=', '~%='])) {
+            $where = '';
+            $explode = explode(' ', $value);
+            foreach ($explode as $i => $v) {
+                $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$v}%'";
+                if ($i < count($explode) - 1) {
+                    $where .= $operator == '~%=' ? ' AND ' : ' OR ';
+                }
+            }
+            $query->where($where);
+        } else if (in_array($operator, ['*='])) {
+            
+        } else if (in_array($operator, ['*+='])) {
+
+        } else if (in_array($operator, ['~='])) {
+            
+        } else if (in_array($operator, ['~*='])) {
+
+        } else if (in_array($operator, ['~~='])) {
+
+        } else if (in_array($operator, ['~+='])) {
+
+        } else if (in_array($operator, ['~|='])) {
+
+        } else if (in_array($operator, ['~|*='])) {
+
+        } else if (in_array($operator, ['~|+='])) {
+
+        } else if (in_array($operator, ['**='])) {
+
+        } else if (in_array($operator, ['**+='])) {
+            
+        } else if (in_array($operator, ['#='])) {
+
+        } else if (in_array($operator, ['^='])) {
+            
+        } else if (in_array($operator, ['%^='])) {
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
+        } else if (in_array($operator, ['$='])) {
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%\\{$value}'");
+        } else if (in_array($operator, ['%$='])) {
+            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}'");
+        } else if (in_array($operator, ['&'])) {
+
         }
 
         return $query;
