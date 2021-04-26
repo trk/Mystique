@@ -2,16 +2,16 @@
 
 ### Removed
 
--  `MystiqueFormManager` class
+- `MystiqueFormManager` class
 
 ### Added
 
--  Return `Closure` support for Mystique `php` configs
--  `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module
--  `Finder` class for find `Mystique.*.php, mystique.*.php, Mystique.*.json, mystique.*.json` files
+- Import and Export Mystique field values
+- Return `Closure` support for Mystique `php` configs
+- `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module
+- `Finder` class for find `Mystique.*.php, mystique.*.php, Mystique.*.json, mystique.*.json` files
 
 ## -next
-
 
 ### Added
 
@@ -74,7 +74,7 @@
 
 ## v.0.0.7
 
-- 
+-
 
 ## v.0.0.6
 

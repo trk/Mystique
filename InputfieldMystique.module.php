@@ -82,6 +82,8 @@ class InputfieldMystique extends Inputfield
 
         // Set default resource
         $this->set('resource', $resource);
+        $this->set('allowImport', false);
+        $this->set('allowExport', false);
         $this->set('useJson', false);
         $this->set('jsonString', '');
 	}
@@ -181,8 +183,49 @@ class InputfieldMystique extends Inputfield
             'suffix' => '_' . $page->id,
             'fields' => $resource['fields']
         ], $value->getArray());
+
+        $values = $form->getValues();
+
+        $form = $form->generateFields(new InputfieldWrapper());
+
+        $script = '';
+
+        bd($field->allowImport);
+        bd($field->allowExport);
+
+        if ($field->allowImport) {
+            /**
+             * @var InputfieldTextarea $import
+             */
+            $import = $this->modules->get('InputfieldTextarea');
+            $import->collapsed = Inputfield::collapsedYes;
+            $import->attr('name', $field->name . '_import_data_' . $page->id);
+            $import->label = $this->_('Import');
+            $import->description = $this->_('Paste in the data from an export.');
+            $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
+            $import->icon = 'paste';
+            $form->add($import);
+        }
+
+        if ($field->allowImport) {
+            /**
+             * @var InputfieldTextarea $export
+             */
+            $export = $this->wire('modules')->get('InputfieldTextarea');
+            $export->collapsed = Inputfield::collapsedYes;
+            $export->attr('id+name', $field->name . '_export_data_' . $page->id);
+            $export->label = $this->_('Export');
+            $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
+            $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
+            $export->icon = 'copy';
+            $export->attr('value', wireEncodeJSON($values, true, true));
+            $form->add($export);
+
+            $script = '<script>$(document).ready(function() {$("#' . $field->name . '_export_data_' . $page->id . '").click(function() { $(this).select(); });});</script>';
+        }
         
-        return $form->generateFields(new InputfieldWrapper())->render();
+        
+        return $form->render() . $script;
 	}
 
     /**
@@ -221,39 +264,52 @@ class InputfieldMystique extends Inputfield
 
         $values = $form->getValues();
 
+        $importData = [];
+
+        if ($field->allowImport) {
+            $json = $post->get($field->name . '_import_data_' . $page->id);
+            $json = $json ? json_decode($json, true) : [];
+            $importData = is_array($json) ? $json : [];
+        }
+
         foreach ($form->getInputFields() as $name) {
 
             $rename = $field->name . '_' . $name . '_' . $page->id;
-            $value = $post->get($rename);
 
-            if (in_array($name, $checkboxFields)) {
-
-                $values[$name] = $value ? 1 : 0;
-
-            } else if (in_array($name, $languageFields)) {
-
-                if ($value !== null) {
-                    $values[$name] = $value;
-                }
-
-                foreach ($this->wire('languages') ?: [] as $language) {
-
-                    if ($language->isDefault()) {
-                        continue;
-                    }
-
-                    $val = $post->get($rename . '__' . $language->id);
-
-                    if ($val !== null) {
-                        $values[$name . $language->id] = $val;
-                    }
-
-                }
-
+            if (isset($importData[$name])) {
+                $values[$name] = $importData[$name];
             } else {
+                $value = $post->get($rename);
 
-                $values[$name] = $value ?: '';
-                
+                if (in_array($name, $checkboxFields)) {
+
+                    $values[$name] = $value ? 1 : 0;
+
+                } else if (in_array($name, $languageFields)) {
+
+                    if ($value !== null) {
+                        $values[$name] = $value;
+                    }
+
+                    foreach ($this->wire('languages') ?: [] as $language) {
+
+                        if ($language->isDefault()) {
+                            continue;
+                        }
+
+                        $val = $post->get($rename . '__' . $language->id);
+
+                        if ($val !== null) {
+                            $values[$name . $language->id] = $val;
+                        }
+
+                    }
+
+                } else {
+
+                    $values[$name] = $value ?: '';
+                    
+                }
             }
         }
 
@@ -279,7 +335,7 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
+        $fields = array_merge($fields, ['allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}
@@ -290,6 +346,26 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigInputfields()
     {
         $wrapper = parent::___getConfigInputfields();
+
+        /** @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'allowImport');
+        $checkbox->set('label', $this->_('Allow import input values'));
+        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
+        $checkbox->set('checkboxLabel', $this->_('Allow import'));
+        $checkbox->attr('checked', $this->allowImport ? 'checked' : '');
+
+        $wrapper->append($checkbox);
+
+        /** @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'allowExport');
+        $checkbox->set('label', $this->_('Allow export input values'));
+        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
+        $checkbox->set('checkboxLabel', $this->_('Allow export'));
+        $checkbox->attr('checked', $this->allowExport ? 'checked' : '');
+
+        $wrapper->append($checkbox);
 
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
