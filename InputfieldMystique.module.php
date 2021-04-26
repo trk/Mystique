@@ -190,9 +190,6 @@ class InputfieldMystique extends Inputfield
 
         $script = '';
 
-        bd($field->allowImport);
-        bd($field->allowExport);
-
         if ($field->allowImport) {
             /**
              * @var InputfieldTextarea $import
