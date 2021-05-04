@@ -4,6 +4,7 @@ namespace Altivebir\Mystique;
 
 use ProcessWire\WireData;
 use ProcessWire\Language;
+use ProcessWire\PageArray;
 
 /**
  * Class MystiqueValue
@@ -36,13 +37,18 @@ class MystiqueValue extends WireData
     protected $pageFields;
 
     /**
+     * @var array
+     */
+    protected $pageFieldsAsPage;
+
+    /**
      * @inheritDoc
      */
     public function __construct($values = null, array $options = [])
     {
         parent::__construct();
 
-        foreach (['inputFields', 'languageFields', 'checkboxFields', 'pageFields'] as $n) {
+        foreach (['inputFields', 'languageFields', 'checkboxFields', 'pageFields', 'pageFieldsAsPage'] as $n) {
             $this->{$n} = isset($options[$n]) && is_array($options[$n]) ? $options[$n] : [];
         }
 
@@ -69,6 +75,22 @@ class MystiqueValue extends WireData
                 return parent::get($key);
             } else {
                 return parent::get($key.$this->user->language->id);
+            }
+        }
+        
+        if (in_array($key, $this->pageFields)) {
+            $value = parent::get($key);
+            if (is_array($value) && isset($value[0])) {
+                if (in_array($key, $this->pageFieldsAsPage)) {
+                    $valueArray = new PageArray();
+                    $explode = explode(',', $value[0]);
+                    foreach ($explode as $id) {
+                        $valueArray = $valueArray->add($id);
+                    }
+                    $value = $valueArray;
+                } else {
+                    $value = $this->pages->get($value[0]);
+                }
             }
         }
 

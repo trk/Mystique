@@ -1,5 +1,9 @@
 # Release notes for Mystique Module
 
+### Updated
+
+- Add support for InputfieldPage (Experimental)
+
 ### Removed
 
 - `MystiqueFormManager` class

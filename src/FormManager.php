@@ -4,6 +4,7 @@ namespace Altivebir\Mystique;
 
 use ProcessWire\InputfieldWrapper;
 use ProcessWire\Wire;
+use ProcessWire\PageArray;
 
 /**
  * Class FormManager
@@ -59,6 +60,11 @@ class FormManager extends Wire
      * @var array
      */
     protected $pageFields = [];
+
+    /**
+     * @var array
+     */
+    protected $pageFieldsAsPage = [];
 
     /**
      * @var array
@@ -190,12 +196,22 @@ class FormManager extends Wire
 
                 $this->values[$name] = $value ?: '';
 
-                if ($type == 'InputfieldPage' && $value) {
+                if ($type == 'InputfieldPage') {
                     $this->pageFields[] = $name;
-                    $pages = $this->pages->newPageArray();
-                    $pages->add($value);
+                    if (is_array($value) && isset($value[0])) {
 
-                    $value = $pages;
+                        if (isset($field['set']['derefAsPage']) && $field['set']['derefAsPage']) {
+                            $this->pageFieldsAsPage[] = $name;
+                            $valueArray = new PageArray();
+                            $explode = explode(',', $value[0]);
+                            foreach ($explode as $id) {
+                                $valueArray = $valueArray->add($id);
+                            }
+                            $value = $valueArray;
+                        } else {
+                            $value = $this->pages->get($value[0]);
+                        }
+                    }
                 }
 
                 $field['value'] = $value;
@@ -274,7 +290,8 @@ class FormManager extends Wire
             'inputFields' => $this->getInputFields(),
             'languageFields' => $this->getLanguageFields(),
             'checkboxFields' => $this->getCheckboxFields(),
-            'pageFields' => $this->getPageFields()
+            'pageFields' => $this->getPageFields(),
+            'pageFieldsAsPage' => $this->getPageFieldsAsPage()
         ];
     }
 
@@ -316,6 +333,16 @@ class FormManager extends Wire
     public function getPageFields(): array
     {
         return $this->pageFields;
+    }
+
+    /**
+     * Return Page Fields as Page Fields
+     *
+     * @return array
+     */
+    public function getPageFieldsAsPage(): array
+    {
+        return $this->pageFieldsAsPage;
     }
 
     /**
