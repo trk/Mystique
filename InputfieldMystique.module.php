@@ -184,8 +184,6 @@ class InputfieldMystique extends Inputfield
             'fields' => $resource['fields']
         ], $value->getArray());
 
-        $values = $form->getValues();
-
         $form = $form->generateFields(new InputfieldWrapper());
 
         $script = '';
@@ -204,7 +202,7 @@ class InputfieldMystique extends Inputfield
             $form->add($import);
         }
 
-        if ($field->allowImport) {
+        if ($value instanceof MystiqueValue && $field->allowExport) {
             /**
              * @var InputfieldTextarea $export
              */
@@ -215,7 +213,7 @@ class InputfieldMystique extends Inputfield
             $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
             $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
             $export->icon = 'copy';
-            $export->attr('value', wireEncodeJSON($values, true, true));
+            $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
             $form->add($export);
 
             $script = '<script>$(document).ready(function() {$("#' . $field->name . '_export_data_' . $page->id . '").click(function() { $(this).select(); });});</script>';
