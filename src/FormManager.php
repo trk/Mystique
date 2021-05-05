@@ -5,6 +5,7 @@ namespace Altivebir\Mystique;
 use ProcessWire\InputfieldWrapper;
 use ProcessWire\Wire;
 use ProcessWire\PageArray;
+use ProcessWire\NullPage;
 
 /**
  * Class FormManager
@@ -197,19 +198,24 @@ class FormManager extends Wire
                 $this->values[$name] = $value ?: '';
 
                 if ($type == 'InputfieldPage') {
+                    $derefAsPage = isset($field['set']['derefAsPage']) ? $field['set']['derefAsPage'] : 0;
                     $this->pageFields[] = $name;
-                    if (is_array($value) && isset($value[0])) {
+                    $this->pageFieldsAsPage[$name] = (int) $derefAsPage;
+                    $field['set']['derefAsPage'] = (int) $derefAsPage;
 
-                        if (isset($field['set']['derefAsPage']) && $field['set']['derefAsPage']) {
-                            $this->pageFieldsAsPage[] = $name;
-                            $valueArray = new PageArray();
-                            $explode = explode(',', $value[0]);
-                            foreach ($explode as $id) {
-                                $valueArray = $valueArray->add($id);
-                            }
-                            $value = $valueArray;
-                        } else {
-                            $value = $this->pages->get($value[0]);
+                    if (is_array($value)) {
+                        $value = $this->wire->pages->findMany('id=' . implode('|', $value));
+                    } else if (is_string($value) && $value) {
+                        $value = $this->wire->pages->get('id=' . $value);
+                    }
+
+                    if (!$value) {
+                        if ($derefAsPage === 0) {
+                            $value = new PageArray();
+                        } else if ($derefAsPage === 1) {
+                            $value = false;
+                        } else if ($derefAsPage === 2) {
+                            $value = new NullPage();
                         }
                     }
                 }

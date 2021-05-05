@@ -10,6 +10,8 @@
 
 ### Added
 
+- InputfieldPage fields returns Page, PageArray, NullPage or false values
+- getDataArray() for MystiqueValue class, return pure data array
 - Import and Export Mystique field values
 - Return `Closure` support for Mystique `php` configs
 - `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module

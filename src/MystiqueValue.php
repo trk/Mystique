@@ -4,6 +4,7 @@ namespace Altivebir\Mystique;
 
 use ProcessWire\WireData;
 use ProcessWire\Language;
+use ProcessWire\NullPage;
 use ProcessWire\PageArray;
 
 /**
@@ -77,24 +78,65 @@ class MystiqueValue extends WireData
                 return parent::get($key.$this->user->language->id);
             }
         }
-        
+
         if (in_array($key, $this->pageFields)) {
             $value = parent::get($key);
-            if (is_array($value) && isset($value[0])) {
-                if (in_array($key, $this->pageFieldsAsPage)) {
-                    $valueArray = new PageArray();
-                    $explode = explode(',', $value[0]);
-                    foreach ($explode as $id) {
-                        $valueArray = $valueArray->add($id);
-                    }
-                    $value = $valueArray;
-                } else {
-                    $value = $this->pages->get($value[0]);
+
+            if (is_array($value)) {
+                $value = $this->wire->pages->findMany('id=' . implode('|', $value));
+            } else if (is_string($value) && $value) {
+                $value = $this->wire->pages->get('id=' . $value);
+            }
+
+            if (!$value) {
+                $derefAsPage = isset($this->pageFieldsAsPage[$key]) ? $this->pageFieldsAsPage[$key] : 0;
+                if ($derefAsPage === 0) {
+                    $value = new PageArray();
+                } else if ($derefAsPage === 1) {
+                    $value = false;
+                } else if ($derefAsPage === 2) {
+                    $value = new NullPage();
                 }
             }
+
+            return $value;
         }
 
         return parent::get($key);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return array
+     */
+    public function getArray()
+    {
+        $data = $this->data;
+
+        if ($this->languageFields) {
+            foreach ($this->languageFields as $key) {
+                $data[$key] = $this->get($key);
+            }
+        }
+        
+        if ($this->pageFields) {
+            foreach ($this->pageFields as $key) {
+                $data[$key] = $this->get($key);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Return data as array
+     *
+     * @return array
+     */
+    public function getDataArray(): array
+    {
+        return $this->data;
     }
 
     /**
@@ -103,6 +145,18 @@ class MystiqueValue extends WireData
     public function set($key, $value)
     {
         return parent::set($key, $value);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param array $data
+     * 
+     * @return MystiqueValue
+     */
+    public function setArray(array $data)
+    {
+        return parent::setArray($data);
     }
 
     /**
@@ -116,7 +170,8 @@ class MystiqueValue extends WireData
             'inputFields' => $this->getInputFields(),
             'languageFields' => $this->getLanguageFields(),
             'checkboxFields' => $this->getCheckboxFields(),
-            'pageFields' => $this->getPageFields()
+            'pageFields' => $this->getPageFields(),
+            'pageFieldsAsPage' => $this->pageFieldsAsPage()
         ];
     }
 
@@ -158,5 +213,15 @@ class MystiqueValue extends WireData
     public function getPageFields(): array
     {
         return $this->pageFields;
+    }
+
+    /**
+     * Return Page Fields as Page
+     *
+     * @return array
+     */
+    public function pageFieldsAsPage(): array
+    {
+        return $this->pageFieldsAsPage;
     }
 }

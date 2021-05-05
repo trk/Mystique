@@ -256,6 +256,8 @@ class InputfieldMystique extends Inputfield
 
         $checkboxFields = $form->getCheckboxFields();
         $languageFields = $form->getLanguageFields();
+        $pageFields = $form->getPageFields();
+        $pageFieldsAsPage = $form->getPageFieldsAsPage();
         
         $post = $this->input->post;
 
@@ -302,10 +304,14 @@ class InputfieldMystique extends Inputfield
 
                     }
 
+                } else if (in_array($name, $pageFields)) {
+                    $derefAsPage = isset($pageFieldsAsPage[$name]) ? $pageFieldsAsPage[$name] : 0;
+                    if ($derefAsPage === 0) {
+                        $value = isset($value[0]) ? explode(',', $value[0]) : [];
+                    }
+                    $values[$name] = $value;
                 } else {
-
                     $values[$name] = $value ?: '';
-                    
                 }
             }
         }

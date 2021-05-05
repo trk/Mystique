@@ -295,9 +295,9 @@ class FieldtypeMystique extends Fieldtype
         if(!$value instanceof MystiqueValue) {
             throw new WireException("Expecting an instance of MystiqueValue");
         }
-
+        
         return [
-            'data' => json_encode($value->getArray())
+            'data' => json_encode($value->getDataArray())
         ];
     }
 
