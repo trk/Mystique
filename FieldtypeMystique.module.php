@@ -279,9 +279,11 @@ class FieldtypeMystique extends Fieldtype
 
         $data = $value ? json_decode($value, true) : [];
 
+        bd($value);
+        bd($MystiqueValue);
 
         foreach ($MystiqueValue as $name => $val) {
-            $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : '';
+            $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : $val;
         }
 
         return $MystiqueValue;
