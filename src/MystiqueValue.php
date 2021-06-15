@@ -104,6 +104,31 @@ class MystiqueValue extends WireData
 
         return parent::get($key);
     }
+    
+    /**
+     * Get current language value, if empty get default language value
+     *
+     * @param string $key
+     * 
+     * @return void
+     */
+    public function getLanguageValue(string $key)
+    {
+        if (in_array($key, $this->languageFields) && $this->user->language instanceof Language) {
+            if ($this->user->language->isDefault()) {
+                $value = parent::get($key);
+            } else {
+                $value = parent::get($key . $this->user->language->id);
+                if (!$value) {
+                    $value = parent::get($key);
+                }
+            }
+        } else {
+            $value = $this->get($key);
+        }
+
+        return $value;
+    }
 
     /**
      * @inheritDoc
