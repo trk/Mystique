@@ -425,7 +425,7 @@ class FormManager extends Wire
         unset($field['type']);
 
         /**
-         * @var Inputfield $inputField
+         * @var Inputfield $input
          **/
         $input = $this->modules->get($type);
 
