@@ -542,6 +542,14 @@ class FormManager extends Wire
     }
 
     /**
+     * Generate fields as array
+     */
+    public function generateFieldsArray(): array
+    {
+        return $this->generate($this->fields);
+    }
+
+    /**
      * Render form
      *
      * @return string

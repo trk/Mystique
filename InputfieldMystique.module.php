@@ -164,63 +164,64 @@ class InputfieldMystique extends Inputfield
      */
 	public function ___render()
     {
-        $page = $this->getEditedPage();
-        $field = $this->getField();
-        $value = $this->attr('value');
+        return '';
+        // $page = $this->getEditedPage();
+        // $field = $this->getField();
+        // $value = $this->attr('value');
 
-        if($field->useJson && $field->jsonString) {
-            $resource = json_decode($field->jsonString, true);
-        } else {
-            $resource = $this->module->loadResource($field->resource, $page, $field, $value);
-        }
+        // if($field->useJson && $field->jsonString) {
+        //     $resource = json_decode($field->jsonString, true);
+        // } else {
+        //     $resource = $this->module->loadResource($field->resource, $page, $field, $value);
+        // }
 
-        if (!isset($resource['fields']) || !is_array($resource['fields'])) {
-            return $this;
-        }
+        // if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+        //     return $this;
+        // }
 
-        $form = new FormManager([
-            'prefix' => $field->name . '_',
-            'suffix' => '_' . $page->id,
-            'fields' => $resource['fields']
-        ], $value->getArray());
+        // $form = new FormManager([
+        //     'prefix' => $field->name . '_',
+        //     'suffix' => '_' . $page->id,
+        //     'fields' => $resource['fields']
+        // ], $value->getArray());
 
-        $form = $form->generateFields(new InputfieldWrapper());
+        // $form = $form->generateFields(new InputfieldWrapper());
 
-        $script = '';
+        // $script = '';
 
-        if ($field->allowImport) {
-            /**
-             * @var InputfieldTextarea $import
-             */
-            $import = $this->modules->get('InputfieldTextarea');
-            $import->collapsed = Inputfield::collapsedYes;
-            $import->attr('name', $field->name . '_import_data_' . $page->id);
-            $import->label = $this->_('Import');
-            $import->description = $this->_('Paste in the data from an export.');
-            $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
-            $import->icon = 'paste';
-            $form->add($import);
-        }
+        // if ($field->allowImport) {
+        //     /**
+        //      * @var InputfieldTextarea $import
+        //      */
+        //     $import = $this->modules->get('InputfieldTextarea');
+        //     $import->collapsed = Inputfield::collapsedYes;
+        //     $import->attr('name', $field->name . '_import_data_' . $page->id);
+        //     $import->label = $this->_('Import');
+        //     $import->description = $this->_('Paste in the data from an export.');
+        //     $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
+        //     $import->icon = 'paste';
+        //     $form->add($import);
+        // }
 
-        if ($value instanceof MystiqueValue && $field->allowExport) {
-            /**
-             * @var InputfieldTextarea $export
-             */
-            $export = $this->wire('modules')->get('InputfieldTextarea');
-            $export->collapsed = Inputfield::collapsedYes;
-            $export->attr('id+name', $field->name . '_export_data_' . $page->id);
-            $export->label = $this->_('Export');
-            $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
-            $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
-            $export->icon = 'copy';
-            $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
-            $form->add($export);
+        // if ($value instanceof MystiqueValue && $field->allowExport) {
+        //     /**
+        //      * @var InputfieldTextarea $export
+        //      */
+        //     $export = $this->wire('modules')->get('InputfieldTextarea');
+        //     $export->collapsed = Inputfield::collapsedYes;
+        //     $export->attr('id+name', $field->name . '_export_data_' . $page->id);
+        //     $export->label = $this->_('Export');
+        //     $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
+        //     $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
+        //     $export->icon = 'copy';
+        //     $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
+        //     $form->add($export);
 
-            $script = '<script>$(document).ready(function() {$("#' . $field->name . '_export_data_' . $page->id . '").click(function() { $(this).select(); });});</script>';
-        }
+        //     $script = '<script>$(document).ready(function() {$("#' . $field->name . '_export_data_' . $page->id . '").click(function() { $(this).select(); });});</script>';
+        // }
         
         
-        return $form->render() . $script;
+        // return $form->render() . $script;
 	}
 
     /**
