@@ -131,7 +131,7 @@ class FieldtypeMystique extends Fieldtype
                         $import = $this->modules->get('InputfieldTextarea');
                         $import->collapsed = Inputfield::collapsedYes;
                         $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
-                        $import->label = sprintf($this->_('Import %s properties'), $inputField->label);
+                        $import->label = sprintf($this->_('Import %s'), $inputField->label);
                         $import->description = $this->_('Paste in the data from an export.');
                         $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
                         $import->icon = 'paste';
@@ -146,7 +146,7 @@ class FieldtypeMystique extends Fieldtype
                         $export = $this->wire('modules')->get('InputfieldTextarea');
                         $export->collapsed = Inputfield::collapsedYes;
                         $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
-                        $export->label = sprintf($this->_('Export %s properties'), $inputField->label);
+                        $export->label = sprintf($this->_('Export %s'), $inputField->label);
                         $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
                         $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
                         $export->icon = 'copy';

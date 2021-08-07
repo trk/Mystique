@@ -194,7 +194,7 @@ class InputfieldMystique extends Inputfield
             $import = $this->modules->get('InputfieldTextarea');
             $import->collapsed = Inputfield::collapsedYes;
             $import->attr('name', $field->name . '_import_data_' . $page->id);
-            $import->label = sprintf($this->_('Import %s properties'), $field->label);
+            $import->label = sprintf($this->_('Import %s'), $field->label);
             $import->description = $this->_('Paste in the data from an export.');
             $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
             $import->icon = 'paste';
@@ -208,7 +208,7 @@ class InputfieldMystique extends Inputfield
             $export = $this->wire('modules')->get('InputfieldTextarea');
             $export->collapsed = Inputfield::collapsedYes;
             $export->attr('id+name', $field->name . '_export_data_' . $page->id);
-            $export->label = sprintf($this->_('Export %s properties'), $field->label);
+            $export->label = sprintf($this->_('Export %s'), $field->label);
             $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
             $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
             $export->icon = 'copy';
