@@ -88,6 +88,10 @@ class FieldtypeMystique extends Fieldtype
                     if (!$inputField instanceof InputfieldMystique) {
                         continue;
                     }
+                    
+                    if ($inputField->groupFields) {
+                        continue;
+                    }
 
                     /**
                      * @var InputfieldMystique $inputField
@@ -410,7 +414,7 @@ class FieldtypeMystique extends Fieldtype
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ['allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
+        $fields = array_merge($fields, ['groupFields', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}

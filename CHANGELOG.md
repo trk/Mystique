@@ -11,6 +11,7 @@
 
 ### Added
 
+- Add option for inputfield group fields inside fieldset
 - InputfieldMystique.js added for javascript processes
 - InputfieldPage fields returns Page, PageArray, NullPage or false values
 - getDataArray() for MystiqueValue class, return pure data array
