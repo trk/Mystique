@@ -40,7 +40,7 @@ class MystiqueQuerySelectFulltext extends \ProcessWire\DatabaseQuerySelectFullte
 	 */
 	protected function matchIsEmpty()
     {
-        $this->query->where("{$this->jsonFieldName}='' OR {$this->jsonFieldName} IS NULL)");
+        $this->query->where("({$this->jsonFieldName}='' OR {$this->jsonFieldName} IS NULL)");
     }
 
     /**
