@@ -67,108 +67,108 @@ class FieldtypeMystique extends Fieldtype
     {
         parent::init();
 
-        $this->addHook('ProcessPageEdit::buildForm', function (HookEvent $event) {
-            /**
-             * @var Page $editedPage
-             **/
-            $editedPage = $event->object->getPage();
-            /** @var InputfieldForm $form */
-            $form = $event->return;
+        // $this->addHook('ProcessPageEdit::buildForm', function (HookEvent $event) {
+        //     /**
+        //      * @var Page $editedPage
+        //      **/
+        //     $editedPage = $event->object->getPage();
+        //     /** @var InputfieldForm $form */
+        //     $form = $event->return;
             
-            foreach ($form->children as $index => $child) {
-                if (!$child instanceof InputfieldWrapper) {
-                    continue;
-                }
+        //     foreach ($form->children as $index => $child) {
+        //         if (!$child instanceof InputfieldWrapper) {
+        //             continue;
+        //         }
 
-                /** @var InputfieldWrapper $child */
+        //         /** @var InputfieldWrapper $child */
 
-                $replace = false;
+        //         $replace = false;
 
-                foreach ($child->children as $inputField) {
-                    if (!$inputField instanceof InputfieldMystique) {
-                        continue;
-                    }
+        //         foreach ($child->children as $inputField) {
+        //             if (!$inputField instanceof InputfieldMystique) {
+        //                 continue;
+        //             }
                     
-                    if ($inputField->groupFields) {
-                        continue;
-                    }
+        //             if ($inputField->groupFields) {
+        //                 continue;
+        //             }
 
-                    /**
-                     * @var InputfieldMystique $inputField
-                     * @var MystiqueValue $value
-                     **/
-                    $value = $inputField->attr('value');
+        //             /**
+        //              * @var InputfieldMystique $inputField
+        //              * @var MystiqueValue $value
+        //              **/
+        //             $value = $inputField->attr('value');
 
-                    if ($inputField->get('useJson') && $inputField->get('jsonString')) {
-                        $resource = json_decode($inputField->get('jsonString'), true);
-                    } else {
-                        $resource = $this->loadResource($inputField->get('resource'), $editedPage, $inputField, $value);
-                    }
+        //             if ($inputField->get('useJson') && $inputField->get('jsonString')) {
+        //                 $resource = json_decode($inputField->get('jsonString'), true);
+        //             } else {
+        //                 $resource = $this->loadResource($inputField->get('resource'), $editedPage, $inputField, $value);
+        //             }
 
-                    if (!isset($resource['fields']) || !is_array($resource['fields'])) {
-                        return $this;
-                    }
+        //             if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+        //                 return $this;
+        //             }
 
-                    $options = [
-                        'prefix' => $inputField->name . '_',
-                        'suffix' => '_' . $editedPage->id,
-                        'fields' => $resource['fields']
-                    ];
+        //             $options = [
+        //                 'prefix' => $inputField->name . '_',
+        //                 'suffix' => '_' . $editedPage->id,
+        //                 'fields' => $resource['fields']
+        //             ];
 
-                    $manager = new FormManager($options, $value->getArray());
-                    $fields = $manager->generateFieldsArray();
+        //             $manager = new FormManager($options, $value->getArray());
+        //             $fields = $manager->generateFieldsArray();
 
-                    $previous = $inputField;
-                    foreach ($fields as $field) {
-                        $child->insertAfter($field, $previous);
-                        $previous = $field;
-                    }
+        //             $previous = $inputField;
+        //             foreach ($fields as $field) {
+        //                 $child->insertAfter($field, $previous);
+        //                 $previous = $field;
+        //             }
 
-                    if ($inputField->get('allowImport') && $inputField->allowImport) {
-                        /**
-                         * @var InputfieldTextarea $import
-                         */
-                        $import = $this->modules->get('InputfieldTextarea');
-                        $import->collapsed = Inputfield::collapsedYes;
-                        $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
-                        $import->label = sprintf($this->_('Import %s'), $inputField->label);
-                        $import->description = $this->_('Paste in the data from an export.');
-                        $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
-                        $import->icon = 'paste';
-                        $child->insertAfter($import, $previous);
-                        $previous = $import;
-                    }
+        //             if ($inputField->get('allowImport') && $inputField->allowImport) {
+        //                 /**
+        //                  * @var InputfieldTextarea $import
+        //                  */
+        //                 $import = $this->modules->get('InputfieldTextarea');
+        //                 $import->collapsed = Inputfield::collapsedYes;
+        //                 $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
+        //                 $import->label = sprintf($this->_('Import %s'), $inputField->label);
+        //                 $import->description = $this->_('Paste in the data from an export.');
+        //                 $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
+        //                 $import->icon = 'paste';
+        //                 $child->insertAfter($import, $previous);
+        //                 $previous = $import;
+        //             }
 
-                    if ($inputField->get('allowExport') && $inputField->allowExport) {
-                        /**
-                         * @var InputfieldTextarea $export
-                         */
-                        $export = $this->wire('modules')->get('InputfieldTextarea');
-                        $export->collapsed = Inputfield::collapsedYes;
-                        $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
-                        $export->label = sprintf($this->_('Export %s'), $inputField->label);
-                        $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
-                        $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
-                        $export->icon = 'copy';
-                        $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
-                        $export->attr('data-mystique-export', 1);
-                        $child->insertAfter($export, $previous);
-                        $previous = $export;
-                    }
+        //             if ($inputField->get('allowExport') && $inputField->allowExport) {
+        //                 /**
+        //                  * @var InputfieldTextarea $export
+        //                  */
+        //                 $export = $this->wire('modules')->get('InputfieldTextarea');
+        //                 $export->collapsed = Inputfield::collapsedYes;
+        //                 $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
+        //                 $export->label = sprintf($this->_('Export %s'), $inputField->label);
+        //                 $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
+        //                 $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
+        //                 $export->icon = 'copy';
+        //                 $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
+        //                 $export->attr('data-mystique-export', 1);
+        //                 $child->insertAfter($export, $previous);
+        //                 $previous = $export;
+        //             }
 
-                    $child->remove($inputField);
+        //             $child->remove($inputField);
 
-                    $replace = true;
-                }
+        //             $replace = true;
+        //         }
 
-                if ($replace) {
-                    $form->set($index, $child);
-                    $event->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
-                }
-            }
+        //         if ($replace) {
+        //             $form->set($index, $child);
+        //             $event->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
+        //         }
+        //     }
 
-            $event->return = $form;
-        });
+        //     $event->return = $form;
+        // });
     }
 
     /**
@@ -414,7 +414,10 @@ class FieldtypeMystique extends Fieldtype
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ['groupFields', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
+        $fields = array_merge($fields, [
+            // 'groupFields',
+            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
+        ]);
         
         return $fields;
 	}

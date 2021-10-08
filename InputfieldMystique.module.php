@@ -82,7 +82,7 @@ class InputfieldMystique extends Inputfield
 
         // Set default resource
         $this->set('resource', $resource);
-        $this->set('groupFields', false);
+        // $this->set('groupFields', false);
         $this->set('allowImport', false);
         $this->set('allowExport', false);
         $this->set('useJson', false);
@@ -150,7 +150,7 @@ class InputfieldMystique extends Inputfield
 	public function setAttribute($key, $value)
     {
 		if($key == 'value' && !$value instanceof MystiqueValue && !is_null($value)) {
-			throw new WireException("This input only accepts a PageBuilderValue for it's value");
+			throw new WireException("This input only accepts a MystiqueValue for it's value");
 		}
 
 		return parent::setAttribute($key, $value); 
@@ -235,13 +235,13 @@ class InputfieldMystique extends Inputfield
         $page = $this->getEditedPage();
         $field = $this->getField();
         $mystiqueValue = $this->attr('value');
-
+        
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
         } else {
             $resource = $this->module->loadResource($field->resource, $page, $field, $mystiqueValue);
         }
-
+        
         if (!isset($resource['fields']) || !is_array($resource['fields'])) {
             return $this;
         }
@@ -336,7 +336,10 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ['groupFields', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
+        $fields = array_merge($fields, [
+            // 'groupFields',
+            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
+        ]);
         
         return $fields;
 	}
@@ -349,13 +352,13 @@ class InputfieldMystique extends Inputfield
         $wrapper = parent::___getConfigInputfields();
 
         /** @var InputfieldCheckbox $checkbox */
-        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
-        $checkbox->attr('name', 'groupFields');
-        $checkbox->set('label', $this->_('Group fields'));
-        $checkbox->set('checkboxLabel', $this->_('Group fields inside fieldset'));
-        $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
+        // $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        // $checkbox->attr('name', 'groupFields');
+        // $checkbox->set('label', $this->_('Group fields'));
+        // $checkbox->set('checkboxLabel', $this->_('Group fields inside fieldset'));
+        // $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
 
-        $wrapper->append($checkbox);
+        // $wrapper->append($checkbox);
 
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
