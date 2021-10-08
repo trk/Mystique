@@ -268,13 +268,31 @@ class InputfieldMystique extends Inputfield
             $json = $json ? json_decode($json, true) : [];
             $importData = is_array($json) ? $json : [];
         }
-
+        
         foreach ($form->getInputFields() as $name) {
 
             $rename = $field->name . '_' . $name . '_' . $page->id;
 
             if (isset($importData[$name])) {
+
                 $values[$name] = $importData[$name];
+
+                if (in_array($name, $languageFields)) {
+
+                    foreach ($this->wire('languages') ?: [] as $language) {
+
+                        if ($language->isDefault()) {
+                            continue;
+                        }
+                        
+                        if (isset($importData[$name . $language->id])) {
+                            $values[$name . $language->id] = $importData[$name . $language->id];
+                        }
+
+                    }
+
+                }
+
             } else {
                 $value = $post->get($rename);
 
