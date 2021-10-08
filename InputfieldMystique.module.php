@@ -82,6 +82,7 @@ class InputfieldMystique extends Inputfield
 
         // Set default resource
         $this->set('resource', $resource);
+        $this->set('groupFields', false);
         $this->set('allowImport', false);
         $this->set('allowExport', false);
         $this->set('useJson', false);
@@ -186,8 +187,6 @@ class InputfieldMystique extends Inputfield
 
         $form = $form->generateFields(new InputfieldWrapper());
 
-        $script = '';
-
         if ($field->allowImport) {
             /**
              * @var InputfieldTextarea $import
@@ -195,7 +194,7 @@ class InputfieldMystique extends Inputfield
             $import = $this->modules->get('InputfieldTextarea');
             $import->collapsed = Inputfield::collapsedYes;
             $import->attr('name', $field->name . '_import_data_' . $page->id);
-            $import->label = $this->_('Import');
+            $import->label = sprintf($this->_('Import %s'), $field->label);
             $import->description = $this->_('Paste in the data from an export.');
             $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
             $import->icon = 'paste';
@@ -209,18 +208,19 @@ class InputfieldMystique extends Inputfield
             $export = $this->wire('modules')->get('InputfieldTextarea');
             $export->collapsed = Inputfield::collapsedYes;
             $export->attr('id+name', $field->name . '_export_data_' . $page->id);
-            $export->label = $this->_('Export');
+            $export->label = sprintf($this->_('Export %s'), $field->label);
             $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
             $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
             $export->icon = 'copy';
             $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
+            $export->attr('data-mystique-export', 1);
             $form->add($export);
 
-            $script = '<script>$(document).ready(function() {$("#' . $field->name . '_export_data_' . $page->id . '").click(function() { $(this).select(); });});</script>';
+            $this->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
         }
         
         
-        return $form->render() . $script;
+        return $form->render();
 	}
 
     /**
@@ -336,7 +336,7 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ['allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
+        $fields = array_merge($fields, ['groupFields', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}
@@ -347,6 +347,15 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigInputfields()
     {
         $wrapper = parent::___getConfigInputfields();
+
+        /** @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'groupFields');
+        $checkbox->set('label', $this->_('Group fields'));
+        $checkbox->set('checkboxLabel', $this->_('Group fields inside fieldset'));
+        $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
+
+        $wrapper->append($checkbox);
 
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
