@@ -63,114 +63,6 @@ class FieldtypeMystique extends Fieldtype
         $this->setResources();
     }
 
-    public function init()
-    {
-        parent::init();
-
-        $this->addHook('ProcessPageEdit::buildForm', function (HookEvent $event) {
-            /**
-             * @var Page $editedPage
-             **/
-            $editedPage = $event->object->getPage();
-            /** @var InputfieldForm $form */
-            $form = $event->return;
-            
-            foreach ($form->children as $index => $child) {
-                if (!$child instanceof InputfieldWrapper) {
-                    continue;
-                }
-
-                /** @var InputfieldWrapper $child */
-
-                $replace = false;
-
-                foreach ($child->children as $inputField) {
-                    if (!$inputField instanceof InputfieldMystique) {
-                        continue;
-                    }
-                    
-                    if ($inputField->groupFields) {
-                        continue;
-                    }
-
-                    /**
-                     * @var InputfieldMystique $inputField
-                     * @var MystiqueValue $value
-                     **/
-                    $value = $inputField->attr('value');
-
-                    if ($inputField->get('useJson') && $inputField->get('jsonString')) {
-                        $resource = json_decode($inputField->get('jsonString'), true);
-                    } else {
-                        $resource = $this->loadResource($inputField->get('resource'), $editedPage, $inputField, $value);
-                    }
-
-                    if (!isset($resource['fields']) || !is_array($resource['fields'])) {
-                        return $this;
-                    }
-
-                    $options = [
-                        'prefix' => $inputField->name . '_',
-                        'suffix' => '_' . $editedPage->id,
-                        'fields' => $resource['fields']
-                    ];
-
-                    $manager = new FormManager($options, $value->getArray());
-                    $fields = $manager->generateFieldsArray();
-
-                    $previous = $inputField;
-                    foreach ($fields as $field) {
-                        $child->insertAfter($field, $previous);
-                        $previous = $field;
-                    }
-
-                    if ($inputField->get('allowImport') && $inputField->allowImport) {
-                        /**
-                         * @var InputfieldTextarea $import
-                         */
-                        $import = $this->modules->get('InputfieldTextarea');
-                        $import->collapsed = Inputfield::collapsedYes;
-                        $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
-                        $import->label = sprintf($this->_('Import %s'), $inputField->label);
-                        $import->description = $this->_('Paste in the data from an export.');
-                        $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
-                        $import->icon = 'paste';
-                        $child->insertAfter($import, $previous);
-                        $previous = $import;
-                    }
-
-                    if ($inputField->get('allowExport') && $inputField->allowExport) {
-                        /**
-                         * @var InputfieldTextarea $export
-                         */
-                        $export = $this->wire('modules')->get('InputfieldTextarea');
-                        $export->collapsed = Inputfield::collapsedYes;
-                        $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
-                        $export->label = sprintf($this->_('Export %s'), $inputField->label);
-                        $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
-                        $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
-                        $export->icon = 'copy';
-                        $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
-                        $export->attr('data-mystique-export', 1);
-                        $child->insertAfter($export, $previous);
-                        $previous = $export;
-                    }
-
-                    $child->remove($inputField);
-
-                    $replace = true;
-                }
-
-                if ($replace) {
-                    $form->set($index, $child);
-                    $event->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
-                }
-            }
-
-            $event->return = $form;
-        });
-    }
-
     /**
      * Get element resources
      *
@@ -414,7 +306,7 @@ class FieldtypeMystique extends Fieldtype
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ['groupFields', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
+        $fields = array_merge($fields, ['allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}
@@ -488,83 +380,105 @@ class FieldtypeMystique extends Fieldtype
      */
     public function getMatchQuery($query, $table, $subfield, $operator, $value)
     {
-        $database = $this->wire("database");
-
-	if(empty($subfield) || $subfield == "data") {
-		$path = '$.*';
-	} else {
-		$path = '$.' . $subfield;
-	}
-
-	$table = $database->escapeTable($table);
-        $value = $database->escapeStr($value);
-        
-        $like = 'LIKE';
-        
-        if(strpos($operator, '!') === 0 && $operator !== '!=') {
-	    $like = 'NOT LIKE';
-	    $operator = ltrim($operator, '!');
-	}
-
-        if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
-        } else if (in_array($operator, ['%='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}%'");
-        } else if (in_array($operator, ['~|%=', '~%='])) {
-            $where = '';
-            $explode = explode(' ', $value);
-            foreach ($explode as $i => $v) {
-                $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$v}%'";
-                if ($i < count($explode) - 1) {
-                    $where .= $operator == '~%=' ? ' AND ' : ' OR ';
-                }
-            }
-            $query->where($where);
-        } else if (in_array($operator, ['*='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '\{$value}%'");
-        } else if (in_array($operator, ['*+='])) {
-
-        } else if (in_array($operator, ['~='])) {
-            $where = '';
-            $explode = explode(' ', $value);
-            foreach ($explode as $i => $v) {
-                $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) REGEXP '[[:<:]]{$v}[[:>:]]'";
-                if ($i < count($explode) - 1) {
-                    $where .= ' AND ';
-                }
-            }
-            $query->where($where);
-        } else if (in_array($operator, ['~*='])) {
-
-        } else if (in_array($operator, ['~~='])) {
-
-        } else if (in_array($operator, ['~+='])) {
-
-        } else if (in_array($operator, ['~|='])) {
-
-        } else if (in_array($operator, ['~|*='])) {
-
-        } else if (in_array($operator, ['~|+='])) {
-
-        } else if (in_array($operator, ['**='])) {
-
-        } else if (in_array($operator, ['**+='])) {
-            
-        } else if (in_array($operator, ['#='])) {
-
-        } else if (in_array($operator, ['^='])) {
-            
-        } else if (in_array($operator, ['%^='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
-        } else if (in_array($operator, ['$='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%\\{$value}'");
-        } else if (in_array($operator, ['%$='])) {
-            $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}'");
-        } else if (in_array($operator, ['&'])) {
-
-        }
+        /**
+         * @var MystiqueQuerySelectFulltext $ft
+         */
+        $ft = $this->wire(new \Altivebir\Mystique\MystiqueQuerySelectFulltext($query));
+        $ft->match($table, $subfield, $operator, $value);
 
         return $query;
     }
+
+    // /**
+    //  * @inheritDoc
+    //  *
+    //  * @param DatabaseQuerySelect $query
+    //  * @param string $table
+    //  * @param string $subfield
+    //  * @param string $operator
+    //  * @param mixed $value
+    //  * 
+    //  * @return DatabaseQuery|DatabaseQuerySelect
+    //  */
+    // public function getMatchQuery($query, $table, $subfield, $operator, $value)
+    // {
+    //     $database = $this->wire("database");
+
+    //     if(empty($subfield) || $subfield == "data") {
+    //         $path = '$.*';
+    //     } else {
+    //         $path = '$.' . $subfield;
+    //     }
+
+	//     $table = $database->escapeTable($table);
+    //     $value = $database->escapeStr($value);
+        
+    //     $like = 'LIKE';
+        
+    //     if(strpos($operator, '!') === 0 && $operator !== '!=') {
+    //         $like = 'NOT LIKE';
+    //         $operator = ltrim($operator, '!');
+    //     }
+
+    //     if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
+    //     } else if (in_array($operator, ['%='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}%'");
+    //     } else if (in_array($operator, ['~|%=', '~%='])) {
+    //         $where = '';
+    //         $explode = explode(' ', $value);
+    //         foreach ($explode as $i => $v) {
+    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$v}%'";
+    //             if ($i < count($explode) - 1) {
+    //                 $where .= $operator == '~%=' ? ' AND ' : ' OR ';
+    //             }
+    //         }
+    //         $query->where($where);
+    //     } else if (in_array($operator, ['*='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '\{$value}%'");
+    //     } else if (in_array($operator, ['*+='])) {
+
+    //     } else if (in_array($operator, ['~='])) {
+    //         $where = '';
+    //         $explode = explode(' ', $value);
+    //         foreach ($explode as $i => $v) {
+    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) REGEXP '[[:<:]]{$v}[[:>:]]'";
+    //             if ($i < count($explode) - 1) {
+    //                 $where .= ' AND ';
+    //             }
+    //         }
+    //         $query->where($where);
+    //     } else if (in_array($operator, ['~*='])) {
+
+    //     } else if (in_array($operator, ['~~='])) {
+
+    //     } else if (in_array($operator, ['~+='])) {
+
+    //     } else if (in_array($operator, ['~|='])) {
+
+    //     } else if (in_array($operator, ['~|*='])) {
+
+    //     } else if (in_array($operator, ['~|+='])) {
+
+    //     } else if (in_array($operator, ['**='])) {
+
+    //     } else if (in_array($operator, ['**+='])) {
+            
+    //     } else if (in_array($operator, ['#='])) {
+
+    //     } else if (in_array($operator, ['^='])) {
+            
+    //     } else if (in_array($operator, ['%^='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
+    //     } else if (in_array($operator, ['$='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%\\{$value}'");
+    //     } else if (in_array($operator, ['%$='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}'");
+    //     } else if (in_array($operator, ['&'])) {
+
+    //     }
+
+    //     return $query;
+    // }
 }
 
