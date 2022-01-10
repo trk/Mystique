@@ -168,6 +168,10 @@ class InputfieldMystique extends Inputfield
         $page = $this->getEditedPage();
         $field = $this->getField();
         $value = $this->attr('value');
+	
+	if (!$value instanceof MystiqueValue) {
+            $value = new MystiqueValue();
+        }
 
         if($field->useJson && $field->jsonString) {
             $resource = json_decode($field->jsonString, true);
