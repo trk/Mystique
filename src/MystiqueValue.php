@@ -83,9 +83,11 @@ class MystiqueValue extends WireData
             $value = parent::get($key);
 
             if (is_array($value)) {
-                $value = $this->wire->pages->findMany('id=' . implode('|', $value));
+                // $value = $this->wire->pages->findMany('id=' . implode('|', $value));
+                $value = $this->wire->pages->getByIDs($value);
             } else if (is_string($value) && $value) {
-                $value = $this->wire->pages->get('id=' . $value);
+                // $value = $this->wire->pages->get('id=' . $value);
+                $value = $this->wire->pages->getById($value);
             }
 
             if (!$value) {
