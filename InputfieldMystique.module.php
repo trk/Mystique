@@ -2,7 +2,7 @@
 
 namespace ProcessWire;
 
-use Altivebir\Mystique\MystiqueFormManager;
+use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
 
 /**
@@ -20,9 +20,9 @@ use Altivebir\Mystique\MystiqueValue;
 class InputfieldMystique extends Inputfield
 {
     /**
-     * @var Mystique $Mystique
+     * @var FieldtypeMystique
      */
-    protected $Mystique;
+    protected $module;
 
     /**
      * @var InputfieldMystique
@@ -43,7 +43,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.16',
+            'version' => '0.0.17',
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -55,31 +55,36 @@ class InputfieldMystique extends Inputfield
             'icon' => 'cogs'
         ];
 	}
-
+    
     /**
-     * @inheritdoc
-     *
-     * @throws WireException
+     * @inheritDoc
      */
-	public function __construct()
+	public function __construct($module = null)
     {
 		parent::__construct();
-
+        
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
 
-        $this->Mystique = $this->wire("modules")->get("Mystique");
+        $this->module = $module ?: $this->modules->get('FieldtypeMystique');
 
-        $resource = "";
+        $resource = '';
 
-        // get resources
-        $resources = $this->Mystique->resources();
-        if (count($resources)) {
-            $resource = reset($resources);
-            $resource = $resource["__id"];
+        foreach ($this->module->getResources() as $base => $resources) {
+
+            if ($resource) {
+                continue;
+            }
+
+            foreach ($resources as $name => $source) {
+                $resource = $source['caller'];
+            }
         }
 
         // Set default resource
         $this->set('resource', $resource);
+        // $this->set('groupFields', false);
+        $this->set('allowImport', false);
+        $this->set('allowExport', false);
         $this->set('useJson', false);
         $this->set('jsonString', '');
 	}
@@ -107,11 +112,31 @@ class InputfieldMystique extends Inputfield
     /**
      * @inheritDoc
      *
+     * @return Field
+     */
+    public function getField()
+    {
+        return $this->field;
+    }
+
+    /**
+     * @inheritDoc
+     *
      * @param Page $page
      */
     public function setEditedPage(Page $page)
     {
         $this->editedPage = $page;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return Page
+     */
+    public function getEditedPage()
+    {
+        return $this->editedPage;
     }
 
     /**
@@ -125,7 +150,7 @@ class InputfieldMystique extends Inputfield
 	public function setAttribute($key, $value)
     {
 		if($key == 'value' && !$value instanceof MystiqueValue && !is_null($value)) {
-			throw new WireException("This input only accepts a PageBuilderValue for it's value");
+			throw new WireException("This input only accepts a MystiqueValue for it's value");
 		}
 
 		return parent::setAttribute($key, $value); 
@@ -140,16 +165,67 @@ class InputfieldMystique extends Inputfield
      */
 	public function ___render()
     {
-        /* @var MystiqueFormManager $manager */
-        $manager = new MystiqueFormManager($this->field, $this->editedPage);
-        /* @var $wrapper InputfieldWrapper */
-        $wrapper = $this->wire(new InputfieldWrapper());
-        /* @var $value MystiqueValue */
+        $page = $this->getEditedPage();
+        $field = $this->getField();
         $value = $this->attr('value');
-        // add fields with values to wrapper
-        $wrapper->add($manager->build($value));
+        $field->label = $this->_($field->label);
 
-		return $wrapper->render();
+        if (!$value instanceof MystiqueValue) {
+            $value = new MystiqueValue();
+        }
+
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
+        } else {
+            $resource = $this->module->loadResource($field->resource, $page, $field, $value);
+        }
+
+        if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+            return $this;
+        }
+
+        $form = new FormManager([
+            'prefix' => $field->name . '_',
+            'suffix' => '_' . $page->id,
+            'fields' => $resource['fields']
+        ], $value->getArray());
+
+        $form = $form->generateFields(new InputfieldWrapper());
+
+        if ($field->allowImport) {
+            /**
+             * @var InputfieldTextarea $import
+             */
+            $import = $this->modules->get('InputfieldTextarea');
+            $import->collapsed = Inputfield::collapsedYes;
+            $import->attr('name', $field->name . '_import_data_' . $page->id);
+            $import->label = sprintf($this->_('Import %s'), $field->label);
+            $import->description = $this->_('Paste in the data from an export.');
+            $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
+            $import->icon = 'paste';
+            $form->add($import);
+        }
+
+        if ($value instanceof MystiqueValue && $field->allowExport) {
+            /**
+             * @var InputfieldTextarea $export
+             */
+            $export = $this->wire('modules')->get('InputfieldTextarea');
+            $export->collapsed = Inputfield::collapsedYes;
+            $export->attr('id+name', $field->name . '_export_data_' . $page->id);
+            $export->label = sprintf($this->_('Export %s'), $field->label);
+            $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
+            $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
+            $export->icon = 'copy';
+            $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
+            $export->attr('data-mystique-export', 1);
+            $form->add($export);
+
+            $this->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
+        }
+        
+        
+        return $form->render();
 	}
 
     /**
@@ -161,59 +237,132 @@ class InputfieldMystique extends Inputfield
      */
     public function ___processInput(WireInputData $input)
     {
-        /* @var MystiqueFormManager $manager */
-        $manager = new MystiqueFormManager($this->field, $this->editedPage);
-        /* @var MystiqueValue $mystiqueValue */
+        $page = $this->getEditedPage();
+        $field = $this->getField();
         $mystiqueValue = $this->attr('value');
-        // Loop all inputs and check posted data
-        foreach ($manager->inputFields as $name => $value) {
-            if(in_array($name, $manager->checkboxFields)) {
-                $value = $this->input->post->{$manager->buildPrefix($name)};
-                if($value) {
-                    $mystiqueValue->set($name, '1');
-                } else {
-                    $mystiqueValue->set($name, '0');
-                }
-            } else if(in_array($name, $manager->languageFields)) {
-                $value = $this->input->post->{$manager->buildPrefix($name)};
-                if ($value !== null) {
-                    $mystiqueValue->set($name, $value);
-                }
-                foreach ($this->wire('languages') ?: [] as $language) {
-                    if ($language->isDefault()) {
-                        continue;
+        
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
+        } else {
+            $resource = $this->module->loadResource($field->resource, $page, $field, $mystiqueValue);
+        }
+        
+        if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+            return $this;
+        }
+
+        $form = new FormManager([
+            'prefix' => $field->name . '_',
+            'suffix' => '_' . $page->id,
+            'fields' => $resource['fields']
+        ], $mystiqueValue->getArray());
+
+        $checkboxFields = $form->getCheckboxFields();
+        $languageFields = $form->getLanguageFields();
+        $pageFields = $form->getPageFields();
+        $pageFieldsAsPage = $form->getPageFieldsAsPage();
+        
+        $post = $this->input->post;
+
+        $values = $form->getValues();
+
+        $importData = [];
+
+        if ($field->allowImport) {
+            $json = $post->get($field->name . '_import_data_' . $page->id);
+            $json = $json ? json_decode($json, true) : [];
+            $importData = is_array($json) ? $json : [];
+        }
+        
+        foreach ($form->getInputFields() as $name) {
+
+            $rename = $field->name . '_' . $name . '_' . $page->id;
+
+            if (isset($importData[$name])) {
+
+                $values[$name] = $importData[$name];
+
+                if (in_array($name, $languageFields)) {
+
+                    foreach ($this->wire('languages') ?: [] as $language) {
+
+                        if ($language->isDefault()) {
+                            continue;
+                        }
+                        
+                        if (isset($importData[$name . $language->id])) {
+                            $values[$name . $language->id] = $importData[$name . $language->id];
+                        }
+
                     }
-                    $value = $this->input->post->{$manager->buildPrefix($name) . '__' . $language->id};
-                    if ($value !== null) {
-                        $mystiqueValue->set($name . $language->id, $value);
-                    }
+
                 }
+
             } else {
-                $value = $this->input->post->{$manager->buildPrefix($name)};
-                if ($value) {
-                    $mystiqueValue->set($name, $value);
+                $value = $post->get($rename);
+
+                if (in_array($name, $checkboxFields)) {
+
+                    $values[$name] = $value ? 1 : 0;
+
+                } else if (in_array($name, $languageFields)) {
+
+                    if ($value !== null) {
+                        $values[$name] = $value;
+                    }
+
+                    foreach ($this->wire('languages') ?: [] as $language) {
+
+                        if ($language->isDefault()) {
+                            continue;
+                        }
+
+                        $val = $post->get($rename . '__' . $language->id);
+
+                        if ($val !== null) {
+                            $values[$name . $language->id] = $val;
+                        }
+
+                    }
+
+                } else if (in_array($name, $pageFields) && is_array($value)) {
+                    $derefAsPage = isset($pageFieldsAsPage[$name]) ? $pageFieldsAsPage[$name] : 0;
+                    if ($derefAsPage === 0 && count($value) == 1) {
+                        $value = isset($value[0]) ? explode(',', $value[0]) : [];
+                    }
+                    $values[$name] = $value;
                 } else {
-                    $mystiqueValue->set($name, '');
+                    $values[$name] = $value ?: '';
                 }
             }
         }
 
+        $mystiqueValue->setArray($values);
+
         if ($mystiqueValue->isChanged()) {
             $this->trackChange('value');
-            $mystiqueValue->getPage()->trackChange($this->attr('name'));
+            $page->trackChange($this->attr('name'));
         }
 
-        $mystiqueValue->set('__json', $manager->resourceJson);
-        $mystiqueValue->set('__resource', $manager->resourceName);
-        $mystiqueValue->set('__path', $manager->resourcePath);
-
+        $mystiqueValue->set('__resource', $resource['caller']);
 
         return $this;
     }
 
-    public function ___getConfigAllowContext($field) {
+    /**
+     * @inheritDoc
+     *
+     * @param Field $field
+     * 
+     * @return void
+     */
+    public function ___getConfigAllowContext($field)
+    {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
+        $fields = array_merge($fields, [
+            // 'groupFields',
+            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
+        ]);
         
         return $fields;
 	}
@@ -225,7 +374,36 @@ class InputfieldMystique extends Inputfield
     {
         $wrapper = parent::___getConfigInputfields();
 
-        /* @var InputfieldCheckbox $checkbox */
+        /** @var InputfieldCheckbox $checkbox */
+        // $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        // $checkbox->attr('name', 'groupFields');
+        // $checkbox->set('label', $this->_('Group fields'));
+        // $checkbox->set('checkboxLabel', $this->_('Group fields inside fieldset'));
+        // $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
+
+        // $wrapper->append($checkbox);
+
+        /** @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'allowImport');
+        $checkbox->set('label', $this->_('Allow import input values'));
+        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
+        $checkbox->set('checkboxLabel', $this->_('Allow import'));
+        $checkbox->attr('checked', $this->allowImport ? 'checked' : '');
+
+        $wrapper->append($checkbox);
+
+        /** @var InputfieldCheckbox $checkbox */
+        $checkbox = $this->wire->modules->get('InputfieldCheckbox');
+        $checkbox->attr('name', 'allowExport');
+        $checkbox->set('label', $this->_('Allow export input values'));
+        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
+        $checkbox->set('checkboxLabel', $this->_('Allow export'));
+        $checkbox->attr('checked', $this->allowExport ? 'checked' : '');
+
+        $wrapper->append($checkbox);
+
+        /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
         $checkbox->attr('name', 'useJson');
         $checkbox->set('label', $this->_('Use JSON string'));
@@ -234,7 +412,7 @@ class InputfieldMystique extends Inputfield
 
         $wrapper->append($checkbox);
 
-        /* @var InputfieldTextarea $textarea */
+        /** @var InputfieldTextarea $textarea */
         $textarea = $this->wire->modules->get('InputfieldTextarea');
         $textarea->attr('name', 'jsonString');
         $textarea->set('label', $this->_('JSON string'));
@@ -243,22 +421,26 @@ class InputfieldMystique extends Inputfield
 
         $wrapper->append($textarea);
 
-        /* @var InputfieldSelect $select */
+        /** @var InputfieldSelect $select */
         $select = $this->modules->get('InputfieldSelect');
         $select->attr('name', 'resource');
         $select->label = __('Resource');
         $select->required = true;
         $select->showIf = "useJson=''";
 
-        // get resources
-        $resources = $this->Mystique->resources();
-        if (count($resources)) {
-            $resource = reset($resources);
+        $page = $this->getEditedPage();
+        $field = $this->getField();
 
-            $select->defaultValue = $resource["__id"];
-
+        foreach ($this->module->getResources() as $base => $resources) {
             foreach ($resources as $name => $resource) {
-                $select->addOption($resource["__id"], "{$resource['__title']} ({$resource['__base']})");
+
+                if (!$select->defaultValue) {
+                    $select->defaultValue = $resource['caller'];
+                }
+
+                $resource = $this->module->loadResource($resource['caller'], $page, $field);
+
+                $select->addOption($resource['caller'], $resource['title'] . ' (' . $resource['base'] . ')');
             }
         }
 

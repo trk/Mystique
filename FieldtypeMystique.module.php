@@ -2,6 +2,9 @@
 
 namespace ProcessWire;
 
+use Closure;
+use Altivebir\Mystique\Finder;
+use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
 
 /**
@@ -15,21 +18,34 @@ use Altivebir\Mystique\MystiqueValue;
 class FieldtypeMystique extends Fieldtype
 {
     /**
+     * @var string
+     */
+    protected $base = 'templates';
+
+    /**
+     * @var array
+     */
+    protected $resources = [];
+
+    /**
      * @inheritdoc
      *
      * @return array
      */
-    public static function getModuleInfo() {
+    public static function getModuleInfo()
+    {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.16',
+            'version' => '0.0.17',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
             'requires' => [
                 'PHP>=7.0.0',
-                'ProcessWire>=3.0.0',
-                'Mystique'
+                'ProcessWire>=3.0.0'
+            ],
+            'instals' => [
+                'InputfieldMystique'
             ],
             'icon' => 'cogs'
         ];
@@ -43,6 +59,256 @@ class FieldtypeMystique extends Fieldtype
         parent::__construct();
 
         $this->wire('classLoader')->addNamespace('Altivebir\Mystique', __DIR__ . '/src');
+
+        $this->setResources();
+    }
+
+    public function init()
+    {
+        parent::init();
+
+        // $this->addHook('ProcessPageEdit::buildForm', function (HookEvent $event) {
+        //     /**
+        //      * @var Page $editedPage
+        //      **/
+        //     $editedPage = $event->object->getPage();
+        //     /** @var InputfieldForm $form */
+        //     $form = $event->return;
+            
+        //     foreach ($form->children as $index => $child) {
+        //         if (!$child instanceof InputfieldWrapper) {
+        //             continue;
+        //         }
+
+        //         /** @var InputfieldWrapper $child */
+
+        //         $replace = false;
+
+        //         foreach ($child->children as $inputField) {
+        //             if (!$inputField instanceof InputfieldMystique) {
+        //                 continue;
+        //             }
+                    
+        //             if ($inputField->groupFields) {
+        //                 continue;
+        //             }
+
+        //             /**
+        //              * @var InputfieldMystique $inputField
+        //              * @var MystiqueValue $value
+        //              **/
+        //             $value = $inputField->attr('value');
+
+        //             if ($inputField->get('useJson') && $inputField->get('jsonString')) {
+        //                 $resource = json_decode($inputField->get('jsonString'), true);
+        //             } else {
+        //                 $resource = $this->loadResource($inputField->get('resource'), $editedPage, $inputField, $value);
+        //             }
+
+        //             if (!isset($resource['fields']) || !is_array($resource['fields'])) {
+        //                 return $this;
+        //             }
+
+        //             $options = [
+        //                 'prefix' => $inputField->name . '_',
+        //                 'suffix' => '_' . $editedPage->id,
+        //                 'fields' => $resource['fields']
+        //             ];
+
+        //             $manager = new FormManager($options, $value->getArray());
+        //             $fields = $manager->generateFieldsArray();
+
+        //             $previous = $inputField;
+        //             foreach ($fields as $field) {
+        //                 $child->insertAfter($field, $previous);
+        //                 $previous = $field;
+        //             }
+
+        //             if ($inputField->get('allowImport') && $inputField->allowImport) {
+        //                 /**
+        //                  * @var InputfieldTextarea $import
+        //                  */
+        //                 $import = $this->modules->get('InputfieldTextarea');
+        //                 $import->collapsed = Inputfield::collapsedYes;
+        //                 $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
+        //                 $import->label = sprintf($this->_('Import %s'), $inputField->label);
+        //                 $import->description = $this->_('Paste in the data from an export.');
+        //                 $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
+        //                 $import->icon = 'paste';
+        //                 $child->insertAfter($import, $previous);
+        //                 $previous = $import;
+        //             }
+
+        //             if ($inputField->get('allowExport') && $inputField->allowExport) {
+        //                 /**
+        //                  * @var InputfieldTextarea $export
+        //                  */
+        //                 $export = $this->wire('modules')->get('InputfieldTextarea');
+        //                 $export->collapsed = Inputfield::collapsedYes;
+        //                 $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
+        //                 $export->label = sprintf($this->_('Export %s'), $inputField->label);
+        //                 $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
+        //                 $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
+        //                 $export->icon = 'copy';
+        //                 $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
+        //                 $export->attr('data-mystique-export', 1);
+        //                 $child->insertAfter($export, $previous);
+        //                 $previous = $export;
+        //             }
+
+        //             $child->remove($inputField);
+
+        //             $replace = true;
+        //         }
+
+        //         if ($replace) {
+        //             $form->set($index, $child);
+        //             $event->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
+        //         }
+        //     }
+
+        //     $event->return = $form;
+        // });
+    }
+
+    /**
+     * Get element resources
+     *
+     * @return void
+     */
+    protected function setResources()
+    {
+        $paths = join(',', array_filter([
+            $this->config->paths->templates,
+            $this->config->paths->siteModules . '*/',
+        ]));
+
+        $paths = "{{$paths}}configs/{Mystique.*.php,mystique.*.php,Mystique.*.json,mystique.*.json}";
+
+        $files = Finder::glob($paths);
+
+        foreach ($files as $file) {
+            
+            $base = strtolower(strtr(dirname(dirname($file)), [
+                dirname(dirname(dirname($file))) => '',
+                DIRECTORY_SEPARATOR => ''
+            ]));
+
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            $name = strtolower(strtr($file, [
+                dirname($file) => '',
+                DIRECTORY_SEPARATOR => '',
+                'Mystique.' => '',
+                'mystique.' => '',
+                '.' . $ext => ''
+            ]));
+
+            $this->resources[$base][$name] = [
+                'path' => $file,
+                'caller' => $base . '.' . $name,
+                'base' => $base,
+                'name' => $name
+            ];
+        }
+    }
+
+    /**
+     * Get all resources as array list
+     *
+     * @return array
+     */
+    public function getResources(): array
+    {
+        return $this->resources;
+    }
+
+    /**
+     * Check and get element resource
+     *
+     * @param string $name
+     * 
+     * @return array
+     */
+    public function getResource(string $name): array
+    {
+        $base = '';
+
+        $explode = explode('.', $name);
+
+        if (isset($explode[1])) {
+            $base = $explode[0];
+            $name = $explode[1];
+        } else {
+            $base = $this->base;
+            $name = $name;
+        }
+
+        $resource = [
+            'path' => '',
+            'caller' => '',
+            'base' => '',
+            'name' => '',
+            'title' => '',
+            'fields' => []
+        ];
+
+        if ($base && $name) {
+            $resources = $this->getResources();
+
+            if (isset($resources[$base][$name])) {
+                $resource = array_merge($resource, $resources[$base][$name]);
+            }
+        }
+
+        return $resource;
+    }
+    
+    /**
+     * Load resource data
+     *
+     * @param string $name
+     * @param Page|null $page
+     * @param Field|null $field
+     * 
+     * @return array
+     */
+    public function loadResource(string $name, $page = null, $field = null, $value = null): array
+    {
+        $resource = $this->getResource($name);
+
+        if ($resource['path']) {
+
+            $file = $resource['path'];
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            $data = [];
+
+            if ($ext == 'json') {
+                $data = json_decode(file_get_contents($file), true);
+            } else {
+                $data = require $file;
+
+                if ($data instanceof Closure) {
+                    if (!$page instanceof NullPage && $field instanceof Field && !$value) {
+                        $value = $this->___loadPageField($page, $field);
+                        $value = new MystiqueValue($value);
+                    }
+                    $data = $data($page, $field, $value);
+                }
+            }
+
+            if (isset($data['title']) && $data['title']) {
+                $resource['title'] = $data['title'];
+            }
+
+            $name = isset($data['name']) ? $data['name'] : basename($file);
+            $resource['title'] = $resource['title'] ?: $name;
+
+            $resource['fields'] = isset($data['fields']) && is_array($data['fields']) ? $data['fields'] : [];
+        }
+
+        return $resource;
     }
 
     /**
@@ -50,10 +316,12 @@ class FieldtypeMystique extends Fieldtype
      */
     public function getInputfield(Page $page, Field $field)
     {
-        /* @var InputfieldMystique $inputField */
-        $inputField = $this->wire('modules')->get('InputfieldMystique');
-        $inputField->setField($field);
+        /**
+         * @var InputfieldMystique $inputField
+         */
+        $inputField = new InputfieldMystique($this);
         $inputField->setEditedPage($page);
+        $inputField->setField($field);
 
         return $inputField;
     }
@@ -70,7 +338,25 @@ class FieldtypeMystique extends Fieldtype
     {
         $field = $page->id ? $page->template->fieldgroup->getField($field, true) : $field;
 
-        return new MystiqueValue($page, $field);
+        if($field->useJson && $field->jsonString) {
+            $resource = json_decode($field->jsonString, true);
+        } else {
+            $resource = $field->resource;
+        }
+
+        if ($resource) {
+            $resource = $this->loadResource($field->resource, $page, $field);
+        }
+
+        if (!is_array($resource) && !isset($resource['fields']) || !is_array($resource['fields'])) {
+            return new MystiqueValue();
+        }
+
+        $form = new FormManager([
+            'fields' => $resource['fields']
+        ]);
+
+        return new MystiqueValue($form->getValues(), $form->getFieldTypes());
     }
 
     /**
@@ -102,7 +388,7 @@ class FieldtypeMystique extends Fieldtype
         $data = $value ? json_decode($value, true) : [];
 
         foreach ($MystiqueValue as $name => $val) {
-            $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : '';
+            $MystiqueValue->{$name} = array_key_exists($name, $data) ? $data[$name] : $val;
         }
 
         return $MystiqueValue;
@@ -113,22 +399,25 @@ class FieldtypeMystique extends Fieldtype
      */
     public function ___sleepValue(Page $page, Field $field, $value)
     {
-        $MystiqueValue = $value;
-
-        if(!$MystiqueValue instanceof MystiqueValue) {
+        if(!$value instanceof MystiqueValue) {
             throw new WireException("Expecting an instance of MystiqueValue");
         }
+        
         return [
-            'data' => json_encode($value->getArray())
+            'data' => json_encode($value->getDataArray())
         ];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function ___getConfigAllowContext($field) {
+    public function ___getConfigAllowContext($field)
+    {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, ["useJson", "jsonString", "resource"]);
+        $fields = array_merge($fields, [
+            // 'groupFields',
+            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
+        ]);
         
         return $fields;
 	}
@@ -144,38 +433,162 @@ class FieldtypeMystique extends Fieldtype
 
         $schema['keys']['data'] = 'FULLTEXT KEY `data` (`data`)';
 
+        if ($field->id) {
+            $this->updateDatabaseSchema($field, $schema);
+        }
+        
         return $schema;
     }
 
     /**
-     * @inheritdoc
+	 * Update the DB schema, if necessary
+	 * 
+	 * @param Field $field
+	 * @param array $schema
+	 *
+	 */
+    protected function updateDatabaseSchema(Field $field, array $schema)
+    {
+
+		$requiredVersion = 1; 
+		$schemaVersion = (int) $field->get('schemaVersion'); 
+
+		if($schemaVersion >= $requiredVersion) {
+			// already up-to-date
+			return;
+		}
+
+		if($schemaVersion == 0) {
+            $schemaVersion = 1; 
+			$database = $this->wire('database');
+			$table = $database->escapeTable($field->getTable());
+			$query = $database->prepare("SHOW TABLES LIKE '$table'"); 
+			$query->execute();
+			$row = $query->fetch(\PDO::FETCH_NUM); 
+			$query->closeCursor();
+			if (!empty($row)) {
+                $sql = "ALTER TABLE {$field->getTable()} MODIFY data LONGTEXT NOT NULL";
+                $query = $this->wire('database')->prepare($sql);
+                $query->execute();
+                $this->message("Updated {$field->getTable()} database for LONGTEXT storage", Notice::log);
+            }
+		}
+
+		$field->set('schemaVersion', $schemaVersion); 
+		$field->save();
+    }
+    
+    /**
+     * @inheritDoc
      *
      * @param DatabaseQuerySelect $query
      * @param string $table
      * @param string $subfield
      * @param string $operator
      * @param mixed $value
+     * 
      * @return DatabaseQuery|DatabaseQuerySelect
-     * @throws WireException
      */
     public function getMatchQuery($query, $table, $subfield, $operator, $value)
     {
-        if($subfield) {
-            $value = '"' . $subfield . '":"' . $value . '"';
-        }
-        $subfield = 'data';
-        $operator = '%=';
-        
-        if($this->wire('database')->isOperator($operator)) {
-            // if dealing with something other than address, or operator is native to SQL,
-            // then let Fieldtype::getMatchQuery handle it instead
-            return parent::getMatchQuery($query, $table, $subfield, $operator, $value);
-        }
-        // if we get here, then we're performing either %= (LIKE and variations) or *= (FULLTEXT and variations)
-        $ft = new DatabaseQuerySelectFulltext($query);
+        /**
+         * @var MystiqueQuerySelectFulltext $ft
+         */
+        $ft = $this->wire(new \Altivebir\Mystique\MystiqueQuerySelectFulltext($query));
         $ft->match($table, $subfield, $operator, $value);
 
         return $query;
     }
-}
 
+    // /**
+    //  * @inheritDoc
+    //  *
+    //  * @param DatabaseQuerySelect $query
+    //  * @param string $table
+    //  * @param string $subfield
+    //  * @param string $operator
+    //  * @param mixed $value
+    //  * 
+    //  * @return DatabaseQuery|DatabaseQuerySelect
+    //  */
+    // public function getMatchQuery($query, $table, $subfield, $operator, $value)
+    // {
+    //     $database = $this->wire("database");
+
+    //     if(empty($subfield) || $subfield == "data") {
+    //         $path = '$.*';
+    //     } else {
+    //         $path = '$.' . $subfield;
+    //     }
+
+	//     $table = $database->escapeTable($table);
+    //     $value = $database->escapeStr($value);
+        
+    //     $like = 'LIKE';
+        
+    //     if(strpos($operator, '!') === 0 && $operator !== '!=') {
+    //         $like = 'NOT LIKE';
+    //         $operator = ltrim($operator, '!');
+    //     }
+
+    //     if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
+    //     } else if (in_array($operator, ['%='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}%'");
+    //     } else if (in_array($operator, ['~|%=', '~%='])) {
+    //         $where = '';
+    //         $explode = explode(' ', $value);
+    //         foreach ($explode as $i => $v) {
+    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$v}%'";
+    //             if ($i < count($explode) - 1) {
+    //                 $where .= $operator == '~%=' ? ' AND ' : ' OR ';
+    //             }
+    //         }
+    //         $query->where($where);
+    //     } else if (in_array($operator, ['*='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '\{$value}%'");
+    //     } else if (in_array($operator, ['*+='])) {
+
+    //     } else if (in_array($operator, ['~='])) {
+    //         $where = '';
+    //         $explode = explode(' ', $value);
+    //         foreach ($explode as $i => $v) {
+    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) REGEXP '[[:<:]]{$v}[[:>:]]'";
+    //             if ($i < count($explode) - 1) {
+    //                 $where .= ' AND ';
+    //             }
+    //         }
+    //         $query->where($where);
+    //     } else if (in_array($operator, ['~*='])) {
+
+    //     } else if (in_array($operator, ['~~='])) {
+
+    //     } else if (in_array($operator, ['~+='])) {
+
+    //     } else if (in_array($operator, ['~|='])) {
+
+    //     } else if (in_array($operator, ['~|*='])) {
+
+    //     } else if (in_array($operator, ['~|+='])) {
+
+    //     } else if (in_array($operator, ['**='])) {
+
+    //     } else if (in_array($operator, ['**+='])) {
+            
+    //     } else if (in_array($operator, ['#='])) {
+
+    //     } else if (in_array($operator, ['^='])) {
+            
+    //     } else if (in_array($operator, ['%^='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
+    //     } else if (in_array($operator, ['$='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%\\{$value}'");
+    //     } else if (in_array($operator, ['%$='])) {
+    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}'");
+    //     } else if (in_array($operator, ['&'])) {
+
+    //     }
+
+    //     return $query;
+    // }
+}

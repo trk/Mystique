@@ -1,5 +1,25 @@
 # Release notes for Mystique Module
 
+### Updated
+
+- Add support for InputfieldPage (Experimental)
+- Add support for all ProcessWire selectors (Experimental)
+
+### Removed
+
+- `MystiqueFormManager` class
+
+### Added
+
+- InputfieldPage fields returns Page, PageArray, NullPage or false values
+- getDataArray() for MystiqueValue class, return pure data array
+- Import and Export Mystique field values
+- Return `Closure` support for Mystique `php` configs
+- `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module
+- `Finder` class for find `Mystique.*.php, mystique.*.php, Mystique.*.json, mystique.*.json` files
+
+## -next
+
 ### Added
 
 - `attrs`, `wrapAttrs` for multiple attributes, `attr`, `wrapAttr` for single attribute
@@ -61,7 +81,7 @@
 
 ## v.0.0.7
 
-- 
+-
 
 ## v.0.0.6
 

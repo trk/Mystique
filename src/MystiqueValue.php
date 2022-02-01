@@ -2,13 +2,10 @@
 
 namespace Altivebir\Mystique;
 
-use ProcessWire\Language;
-use ProcessWire\Mystique;
-use ProcessWire\Field;
-use ProcessWire\Page;
 use ProcessWire\WireData;
-use ProcessWire\WireException;
-use ProcessWire\InputfieldMystique;
+use ProcessWire\Language;
+use ProcessWire\NullPage;
+use ProcessWire\PageArray;
 
 /**
  * Class MystiqueValue
@@ -16,81 +13,56 @@ use ProcessWire\InputfieldMystique;
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
  *
- * @property $__json
- * @property $__name
- * @property $__path
- * @property $__resource
- *
  * @package Altivebir\Mystique
  */
 class MystiqueValue extends WireData
 {
     /**
-     * @var Mystique $Mystique
+     * @var array
      */
-    protected $Mystique;
+    protected $inputFields;
 
     /**
-     * @var MystiqueFormManager
+     * @var array
      */
-    private $manager;
+    protected $languageFields;
 
     /**
-     * @var Page
+     * @var array
      */
-    private $page;
+    protected $checkboxFields;
 
     /**
-     * @var InputfieldMystique
+     * @var array
      */
-    private $field;
+    protected $pageFields;
+
+    /**
+     * @var array
+     */
+    protected $pageFieldsAsPage;
 
     /**
      * @inheritDoc
-     *
-     * @param Page $page
-     * @param InputfieldMystique $field
-     * @throws WireException
      */
-    public function __construct(Page $page, Field $field)
+    public function __construct($values = null, array $options = [])
     {
         parent::__construct();
 
-        $this->Mystique = $this->wire("modules")->get("Mystique");
-        $this->page = $page;
-        $this->field = $field;
+        foreach (['inputFields', 'languageFields', 'checkboxFields', 'pageFields', 'pageFieldsAsPage'] as $n) {
+            $this->{$n} = isset($options[$n]) && is_array($options[$n]) ? $options[$n] : [];
+        }
 
-        if($this->field->useJson && $this->field->jsonString || $field->resource) {
+        if (is_string($values) && is_array(json_decode($values, true))) {
+            $values = json_decode($values, true);
+        }
 
-            $this->manager = new MystiqueFormManager($field, $page);
-
-            if($this->field->useJson && $this->field->jsonString) {
-                $resource = json_decode($field->jsonString, true);
-            } else {
-                $resource =  $this->Mystique->resource($this->field->resource);
+        if (is_array($values)) {
+            foreach ($values as $name => $value) {
+            
+                $this->set($name, $value);
+    
             }
-
-            // Set default values
-            foreach ($this->manager->inputFields as $name => $value) {
-                if(in_array($name, $this->manager->languageFields)) {
-                    $this->set($name, $value);
-                    foreach ($this->languages ?: [] as $language) {
-                        if ($language->isDefault()) {
-                            continue;
-                        } else {
-                            $this->set($name . $language->id, $value);
-                        }
-                    }
-                } else {
-                    $this->set($name, $value);
-                }
-            }
-
-            $this->set('__json', json_encode($resource));
-            $this->set('__name', isset($resource['__name']) ? $resource['__name'] : '');
-            $this->set('__path', isset($resource['__path']) ? $resource['__path'] : '');
-        } else {
-            throw new WireException("You need to select a resource and save field before start to use Mystique.");
         }
     }
 
@@ -99,15 +71,98 @@ class MystiqueValue extends WireData
      */
     public function get($key)
     {
-        if(in_array($key, $this->manager->languageFields)) {
-            $user = $this->user;
-            $language = $user ? $user->language : null;
-            if($language instanceof Language && !$language->isDefault) {
-                return parent::get($key . $language->id);
+        if (in_array($key, $this->languageFields) && $this->user->language instanceof Language) {
+            if ($this->user->language->isDefault()) {
+                return parent::get($key);
+            } else {
+                return parent::get($key.$this->user->language->id);
             }
         }
 
+        if (in_array($key, $this->pageFields)) {
+            $value = parent::get($key);
+
+            if (is_array($value)) {
+                // $value = $this->wire->pages->findMany('id=' . implode('|', $value));
+                $value = $this->wire->pages->getByIDs($value);
+            } else if (is_string($value) && $value) {
+                $value = $this->wire->pages->get('id=' . $value);
+            }
+
+            if (!$value) {
+                $derefAsPage = isset($this->pageFieldsAsPage[$key]) ? $this->pageFieldsAsPage[$key] : 0;
+                if ($derefAsPage === 0) {
+                    $value = new PageArray();
+                } else if ($derefAsPage === 1) {
+                    $value = false;
+                } else if ($derefAsPage === 2) {
+                    $value = new NullPage();
+                }
+            }
+
+            return $value;
+        }
+
         return parent::get($key);
+    }
+    
+    /**
+     * Get current language value, if empty get default language value
+     *
+     * @param string $key
+     * 
+     * @return void
+     */
+    public function getLanguageValue(string $key)
+    {
+        if (in_array($key, $this->languageFields) && $this->user->language instanceof Language) {
+            if ($this->user->language->isDefault()) {
+                $value = parent::get($key);
+            } else {
+                $value = parent::get($key . $this->user->language->id);
+                if (!$value) {
+                    $value = parent::get($key);
+                }
+            }
+        } else {
+            $value = $this->get($key);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return array
+     */
+    public function getArray()
+    {
+        $data = $this->data;
+
+        if ($this->languageFields) {
+            foreach ($this->languageFields as $key) {
+                $data[$key] = $this->get($key);
+            }
+        }
+        
+        if ($this->pageFields) {
+            foreach ($this->pageFields as $key) {
+                $data[$key] = $this->get($key);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Return data as array
+     *
+     * @return array
+     */
+    public function getDataArray(): array
+    {
+        return $this->data;
     }
 
     /**
@@ -119,50 +174,80 @@ class MystiqueValue extends WireData
     }
 
     /**
-     * @return Page
+     * @inheritDoc
+     *
+     * @param array $data
+     * 
+     * @return MystiqueValue
      */
-    public function getPage()
+    public function setArray(array $data)
     {
-        return $this->page;
-    }
-
-    public function getResource()
-    {
-        return $this->get('__resource');
-    }
-
-    public function getPath()
-    {
-        return $this->get('__path');
+        return parent::setArray($data);
     }
 
     /**
-     * Return data as array
+     * Return field types
      *
      * @return array
      */
-    public function array(): array
+    public function getFieldTypes(): array
     {
-        return $this->data;
+        return [
+            'inputFields' => $this->getInputFields(),
+            'languageFields' => $this->getLanguageFields(),
+            'checkboxFields' => $this->getCheckboxFields(),
+            'pageFields' => $this->getPageFields(),
+            'pageFieldsAsPage' => $this->pageFieldsAsPage()
+        ];
     }
 
     /**
-     * Return data as string
+     * Return Input Fields
      *
-     * @return string
+     * @return array
      */
-    public function json(): string
+    public function getInputFields(): array
     {
-        return json_encode($this->array());
+        return $this->inputFields;
     }
 
     /**
-     * Return json data as string
+     * Return Language Fields
      *
-     * @return string
+     * @return array
      */
-    public function __toString(): string
+    public function getLanguageFields(): array
     {
-        return $this->json();
+        return $this->languageFields;
+    }
+
+    /**
+     * Return Checkbox Fields
+     *
+     * @return array
+     */
+    public function getCheckboxFields(): array
+    {
+        return $this->checkboxFields;
+    }
+
+    /**
+     * Return Page Fields
+     *
+     * @return array
+     */
+    public function getPageFields(): array
+    {
+        return $this->pageFields;
+    }
+
+    /**
+     * Return Page Fields as Page
+     *
+     * @return array
+     */
+    public function pageFieldsAsPage(): array
+    {
+        return $this->pageFieldsAsPage;
     }
 }
