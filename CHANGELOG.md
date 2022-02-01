@@ -18,7 +18,7 @@
 - `FormManager` class for load and generate Mystique forms, It possible to use `FormManager` outside of `Mystique` module
 - `Finder` class for find `Mystique.*.php, mystique.*.php, Mystique.*.json, mystique.*.json` files
 
-## -next
+## v.0.0.17
 
 ### Added
 
