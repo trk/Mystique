@@ -140,11 +140,12 @@ class MystiqueValue extends WireData
     {
         $data = $this->data;
 
-        if ($this->languageFields) {
-            foreach ($this->languageFields as $key) {
-                $data[$key] = $this->get($key);
-            }
-        }
+        // don't touch language fields
+        // if ($this->languageFields) {
+        //     foreach ($this->languageFields as $key) {
+        //         $data[$key] = $this->get($key);
+        //     }
+        // }
         
         if ($this->pageFields) {
             foreach ($this->pageFields as $key) {

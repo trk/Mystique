@@ -36,7 +36,7 @@ class FieldtypeMystique extends Fieldtype
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.17',
+            'version' => '0.0.18',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
