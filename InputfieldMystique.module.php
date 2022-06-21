@@ -14,6 +14,7 @@ use Altivebir\Mystique\MystiqueValue;
  * @property string $resource
  * @property bool $useJson
  * @property string $jsonString
+ * @property int $hideWrap
  *
  * @package Altivebir\Mystique
  */
@@ -87,6 +88,7 @@ class InputfieldMystique extends Inputfield
         $this->set('allowExport', false);
         $this->set('useJson', false);
         $this->set('jsonString', '');
+        $this->data('hideWrap', 0);
 	}
 
     /**
@@ -155,6 +157,27 @@ class InputfieldMystique extends Inputfield
 
 		return parent::setAttribute($key, $value); 
 	}
+
+    /**
+	 * Render Ready 
+	 * 
+	 * @param Inputfield $parent
+	 * @param bool $renderValueMode
+	 * @return bool
+	 * 
+	 */
+    public function renderReady(Inputfield $parent = null, $renderValueMode = false) {
+		
+		if($this->hideWrap) {
+			$this->addClass('InputfieldMystiqueHideWrap', 'wrapClass');
+			$this->description = '';
+			$this->notes = '';
+			$this->detail = '';
+		}
+		
+		return parent::renderReady($parent, $renderValueMode);
+	}
+
 
     /**
      * @inheritdoc
@@ -382,6 +405,19 @@ class InputfieldMystique extends Inputfield
         // $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
 
         // $wrapper->append($checkbox);
+
+        /** @var InputfieldToggle $f */
+		$toggle = $this->wire()->modules->get('InputfieldToggle');
+		$toggle->attr('name', 'hideWrap');
+		$toggle->label = $this->_('Disable fieldset?');
+		$toggle->icon = 'eye-slash';
+		$toggle->description =
+			$this->_('When fieldset is disabled, the Mystique subfield inputs will not appear grouped in a surrounding fieldset.') . ' ' .
+			$this->_('Instead, they will appear like regular fields outside of a fieldset.') . ' ' .
+			$this->_('Your Mystique field label, description and notes will also not appear.');
+		$toggle->val((int) $this->hideWrap);
+
+        $wrapper->append($toggle);
 
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
