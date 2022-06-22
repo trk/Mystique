@@ -1,0 +1,14 @@
+
+/* Hide the wrapper when configured to do so */
+.InputfieldMystiqueHideWrap > .InputfieldHeader { 
+	display: none; 
+}
+.InputfieldMystiqueHideWrap > .InputfieldContent { 
+	padding: 0; 
+}
+.InputfieldForm .InputfieldMystiqueHideWrap {
+	margin-bottom: 0;
+	border: none;
+	outline: none;
+}
+
