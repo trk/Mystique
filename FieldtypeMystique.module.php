@@ -6,7 +6,6 @@ use Closure;
 use Altivebir\Mystique\Finder;
 use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
-use ProcessWire\FieldtypeMystique as ProcessWireFieldtypeMystique;
 
 /**
  * Class FieldtypeMystique
