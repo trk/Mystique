@@ -6,6 +6,7 @@ use Closure;
 use Altivebir\Mystique\Finder;
 use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
+use ProcessWire\FieldtypeMystique as ProcessWireFieldtypeMystique;
 
 /**
  * Class FieldtypeMystique
@@ -36,7 +37,7 @@ class FieldtypeMystique extends Fieldtype
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.18',
+            'version' => '0.0.19',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -67,108 +68,61 @@ class FieldtypeMystique extends Fieldtype
     {
         parent::init();
 
-        // $this->addHook('ProcessPageEdit::buildForm', function (HookEvent $event) {
-        //     /**
-        //      * @var Page $editedPage
-        //      **/
-        //     $editedPage = $event->object->getPage();
-        //     /** @var InputfieldForm $form */
-        //     $form = $event->return;
+        $this->wire()->addHookBefore('InputfieldRepeater::render', function (HookEvent $e) {
+            $object = $e->object;
+			$field = $object->hasField;
+			$page = $object->hasPage;
             
-        //     foreach ($form->children as $index => $child) {
-        //         if (!$child instanceof InputfieldWrapper) {
-        //             continue;
-        //         }
+            /**
+             * @var Template|null $template
+             * @var Fieldgroup|null $fieldgroup
+             */
+            $template = $field->get('template_id') ? $this->wire()->templates->get($field->get('template_id')) : null;
+            $fieldgroup = $template ? $template->fieldgroup : null;
+            if ($fieldgroup) {
+                foreach ($fieldgroup as $field) {
+                    if (!$field->type instanceof FieldtypeMystique) {
+                        continue;
+                    }
+                    $resource = $field->type->loadResource($field->resource, $page, $field);
+                    $this->loadModuleFileAssets($resource['fields']);
+                }
+            }
+        });
+    }
 
-        //         /** @var InputfieldWrapper $child */
+    /**
+     * Load Inputfield module file assets for repeater fields
+     *
+     * @param array $fields
+     * @return void
+     */
+    protected function loadModuleFileAssets(array $fields, array $loaded = [])
+    {
+        foreach ($fields as $field) {
+            $type = isset($field['type']) ? $field['type'] : 'text';
+            $fallback = isset($field['type_fallback']) ? $field['type_fallback'] : false;
+            if (strpos($type, 'Inputfield') === false) {
+                $type = 'Inputfield' . ucfirst($type);
+            }
 
-        //         $replace = false;
+            if ($fallback && !$this->wire()->modules->isInstalled($type) && $this->wire()->modules->isInstalled($fallback)) {
+                $type = $fallback;
+            }
 
-        //         foreach ($child->children as $inputField) {
-        //             if (!$inputField instanceof InputfieldMystique) {
-        //                 continue;
-        //             }
-                    
-        //             if ($inputField->groupFields) {
-        //                 continue;
-        //             }
+            if (!$this->wire()->modules->isInstalled($type)) {
+                continue;
+            }
 
-        //             /**
-        //              * @var InputfieldMystique $inputField
-        //              * @var MystiqueValue $value
-        //              **/
-        //             $value = $inputField->attr('value');
-
-        //             if ($inputField->get('useJson') && $inputField->get('jsonString')) {
-        //                 $resource = json_decode($inputField->get('jsonString'), true);
-        //             } else {
-        //                 $resource = $this->loadResource($inputField->get('resource'), $editedPage, $inputField, $value);
-        //             }
-
-        //             if (!isset($resource['fields']) || !is_array($resource['fields'])) {
-        //                 return $this;
-        //             }
-
-        //             $options = [
-        //                 'prefix' => $inputField->name . '_',
-        //                 'suffix' => '_' . $editedPage->id,
-        //                 'fields' => $resource['fields']
-        //             ];
-
-        //             $manager = new FormManager($options, $value->getArray());
-        //             $fields = $manager->generateFieldsArray();
-
-        //             $previous = $inputField;
-        //             foreach ($fields as $field) {
-        //                 $child->insertAfter($field, $previous);
-        //                 $previous = $field;
-        //             }
-
-        //             if ($inputField->get('allowImport') && $inputField->allowImport) {
-        //                 /**
-        //                  * @var InputfieldTextarea $import
-        //                  */
-        //                 $import = $this->modules->get('InputfieldTextarea');
-        //                 $import->collapsed = Inputfield::collapsedYes;
-        //                 $import->attr('name', $inputField->name . '_import_data_' . $editedPage->id);
-        //                 $import->label = sprintf($this->_('Import %s'), $inputField->label);
-        //                 $import->description = $this->_('Paste in the data from an export.');
-        //                 $import->notes = $this->_('Copy the export data from another field then paste into the box above with CTRL-V or CMD-V.');
-        //                 $import->icon = 'paste';
-        //                 $child->insertAfter($import, $previous);
-        //                 $previous = $import;
-        //             }
-
-        //             if ($inputField->get('allowExport') && $inputField->allowExport) {
-        //                 /**
-        //                  * @var InputfieldTextarea $export
-        //                  */
-        //                 $export = $this->wire('modules')->get('InputfieldTextarea');
-        //                 $export->collapsed = Inputfield::collapsedYes;
-        //                 $export->attr('id+name', $inputField->name . '_export_data_' . $editedPage->id);
-        //                 $export->label = sprintf($this->_('Export %s'), $inputField->label);
-        //                 $export->description = $this->_('Copy and paste this data into the "Import" box of another installation.');
-        //                 $export->notes = $this->_('Click anywhere in the box to select all export data. Once selected, copy the data with CTRL-C or CMD-C.');
-        //                 $export->icon = 'copy';
-        //                 $export->attr('value', wireEncodeJSON($value->getDataArray(), true, true));
-        //                 $export->attr('data-mystique-export', 1);
-        //                 $child->insertAfter($export, $previous);
-        //                 $previous = $export;
-        //             }
-
-        //             $child->remove($inputField);
-
-        //             $replace = true;
-        //         }
-
-        //         if ($replace) {
-        //             $form->set($index, $child);
-        //             $event->wire->config->scripts->append($this->wire->config->urls->siteModules . "Mystique/InputfieldMystique.js");
-        //         }
-        //     }
-
-        //     $event->return = $form;
-        // });
+            if (!in_array($type, ['InputfieldFieldset']) && !in_array($type, $loaded)) {
+                $loaded[] = $type;
+                $this->wire()->modules->loadModuleFileAssets($type);
+            }
+            
+            if (isset($field['children']) && is_array($field['children']) && $field['children']) {
+                $this->loadModuleFileAssets($field['children'], $loaded);
+            }
+        }
     }
 
     /**

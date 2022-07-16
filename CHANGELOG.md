@@ -1,5 +1,12 @@
 # Release notes for Mystique Module
 
+### Added
+
+- Support for Repeater field
+- Support for Hide Inputfield Wrapper
+
+## v.0.0.19
+
 ### Updated
 
 - Add support for InputfieldPage (Experimental)
