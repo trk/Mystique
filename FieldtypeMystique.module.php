@@ -36,7 +36,7 @@ class FieldtypeMystique extends Fieldtype
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.19',
+            'version' => '0.0.20',
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -367,10 +367,7 @@ class FieldtypeMystique extends Fieldtype
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, [
-            // 'groupFields',
-            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
-        ]);
+        $fields = array_merge($fields, ['hideWrap', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}
@@ -452,96 +449,4 @@ class FieldtypeMystique extends Fieldtype
 
         return $query;
     }
-
-    // /**
-    //  * @inheritDoc
-    //  *
-    //  * @param DatabaseQuerySelect $query
-    //  * @param string $table
-    //  * @param string $subfield
-    //  * @param string $operator
-    //  * @param mixed $value
-    //  * 
-    //  * @return DatabaseQuery|DatabaseQuerySelect
-    //  */
-    // public function getMatchQuery($query, $table, $subfield, $operator, $value)
-    // {
-    //     $database = $this->wire("database");
-
-    //     if(empty($subfield) || $subfield == "data") {
-    //         $path = '$.*';
-    //     } else {
-    //         $path = '$.' . $subfield;
-    //     }
-
-	//     $table = $database->escapeTable($table);
-    //     $value = $database->escapeStr($value);
-        
-    //     $like = 'LIKE';
-        
-    //     if(strpos($operator, '!') === 0 && $operator !== '!=') {
-    //         $like = 'NOT LIKE';
-    //         $operator = ltrim($operator, '!');
-    //     }
-
-    //     if (in_array($operator, ['=', '!=', '<>', '<=>', '>', '<', '>=', '<='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$operator} '{$value}'");
-    //     } else if (in_array($operator, ['%='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}%'");
-    //     } else if (in_array($operator, ['~|%=', '~%='])) {
-    //         $where = '';
-    //         $explode = explode(' ', $value);
-    //         foreach ($explode as $i => $v) {
-    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$v}%'";
-    //             if ($i < count($explode) - 1) {
-    //                 $where .= $operator == '~%=' ? ' AND ' : ' OR ';
-    //             }
-    //         }
-    //         $query->where($where);
-    //     } else if (in_array($operator, ['*='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '\{$value}%'");
-    //     } else if (in_array($operator, ['*+='])) {
-
-    //     } else if (in_array($operator, ['~='])) {
-    //         $where = '';
-    //         $explode = explode(' ', $value);
-    //         foreach ($explode as $i => $v) {
-    //             $where .= "JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) REGEXP '[[:<:]]{$v}[[:>:]]'";
-    //             if ($i < count($explode) - 1) {
-    //                 $where .= ' AND ';
-    //             }
-    //         }
-    //         $query->where($where);
-    //     } else if (in_array($operator, ['~*='])) {
-
-    //     } else if (in_array($operator, ['~~='])) {
-
-    //     } else if (in_array($operator, ['~+='])) {
-
-    //     } else if (in_array($operator, ['~|='])) {
-
-    //     } else if (in_array($operator, ['~|*='])) {
-
-    //     } else if (in_array($operator, ['~|+='])) {
-
-    //     } else if (in_array($operator, ['**='])) {
-
-    //     } else if (in_array($operator, ['**+='])) {
-            
-    //     } else if (in_array($operator, ['#='])) {
-
-    //     } else if (in_array($operator, ['^='])) {
-            
-    //     } else if (in_array($operator, ['%^='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '{$value}%'");
-    //     } else if (in_array($operator, ['$='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%\\{$value}'");
-    //     } else if (in_array($operator, ['%$='])) {
-    //         $query->where("JSON_UNQUOTE(JSON_EXTRACT({$table}.data, '{$path}')) {$like} '%{$value}'");
-    //     } else if (in_array($operator, ['&'])) {
-
-    //     }
-
-    //     return $query;
-    // }
 }

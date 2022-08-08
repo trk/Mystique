@@ -44,7 +44,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.19',
+            'version' => '0.0.20',
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',
@@ -83,7 +83,6 @@ class InputfieldMystique extends Inputfield
 
         // Set default resource
         $this->set('resource', $resource);
-        // $this->set('groupFields', false);
         $this->set('allowImport', false);
         $this->set('allowExport', false);
         $this->set('useJson', false);
@@ -382,10 +381,7 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigAllowContext($field)
     {
         $fields = parent::___getConfigAllowContext($field);
-        $fields = array_merge($fields, [
-            // 'groupFields',
-            'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource'
-        ]);
+        $fields = array_merge($fields, ['hideWrap', 'allowImport', 'allowExport', 'useJson', 'jsonString', 'resource']);
         
         return $fields;
 	}
@@ -396,15 +392,6 @@ class InputfieldMystique extends Inputfield
     public function ___getConfigInputfields()
     {
         $wrapper = parent::___getConfigInputfields();
-
-        /** @var InputfieldCheckbox $checkbox */
-        // $checkbox = $this->wire->modules->get('InputfieldCheckbox');
-        // $checkbox->attr('name', 'groupFields');
-        // $checkbox->set('label', $this->_('Group fields'));
-        // $checkbox->set('checkboxLabel', $this->_('Group fields inside fieldset'));
-        // $checkbox->attr('checked', $this->groupFields ? 'checked' : '');
-
-        // $wrapper->append($checkbox);
 
         /** @var InputfieldToggle $f */
 		$toggle = $this->wire()->modules->get('InputfieldToggle');
@@ -422,21 +409,21 @@ class InputfieldMystique extends Inputfield
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
         $checkbox->attr('name', 'allowImport');
-        $checkbox->set('label', $this->_('Allow import input values'));
-        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
-        $checkbox->set('checkboxLabel', $this->_('Allow import'));
+        $checkbox->set('label', $this->_('Import'));
+        $checkbox->set('description', $this->_('Allow importing values from another MYSTIQUE field'));
+        $checkbox->set('checkboxLabel', $this->_('Allow Importing'));
         $checkbox->attr('checked', $this->allowImport ? 'checked' : '');
-
+        $checkbox->columnWidth = 50;
         $wrapper->append($checkbox);
 
         /** @var InputfieldCheckbox $checkbox */
         $checkbox = $this->wire->modules->get('InputfieldCheckbox');
         $checkbox->attr('name', 'allowExport');
-        $checkbox->set('label', $this->_('Allow export input values'));
-        $checkbox->set('description', $this->_('This option will add an input, bottom of your Mystique input'));
-        $checkbox->set('checkboxLabel', $this->_('Allow export'));
+        $checkbox->set('label', $this->_('Export'));
+        $checkbox->set('description', $this->_('Allow exporting values for import to another MYSTIQUE field'));
+        $checkbox->set('checkboxLabel', $this->_('Allow Exporting'));
         $checkbox->attr('checked', $this->allowExport ? 'checked' : '');
-
+        $checkbox->columnWidth = 50;
         $wrapper->append($checkbox);
 
         /** @var InputfieldCheckbox $checkbox */

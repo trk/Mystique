@@ -1,5 +1,12 @@
 # Release notes for Mystique Module
 
+### Updated
+
+- Unused code cleanup
+- Allow to overwrite `hideWrap` by templates
+
+## v.0.0.20
+
 ### Added
 
 - Support for Repeater field
