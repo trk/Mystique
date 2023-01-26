@@ -2,6 +2,12 @@
 
 ### Updated
 
+- Fix deprecated error 
+
+## v.0.0.21
+
+### Updated
+
 - Unused code cleanup
 - Allow to overwrite `hideWrap` by templates
 
