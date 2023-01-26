@@ -12,6 +12,8 @@ namespace Altivebir\Mystique;
  */
 class MystiqueQuerySelectFulltext extends \ProcessWire\DatabaseQuerySelectFulltext
 {
+	protected string $jsonFieldName = '';
+	
 	/**
 	 * Get 'tableName.fieldName' string
 	 * 
