@@ -2,6 +2,12 @@
 
 ### Updated
 
+- Bug fixes
+
+## v.0.0.22
+
+### Updated
+
 - Fix deprecated error 
 
 ## v.0.0.21

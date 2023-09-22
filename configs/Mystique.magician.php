@@ -20,7 +20,7 @@ return function ($page = null, $field = null, $value = null) {
         ]
     ];
 
-    if ($page instanceof Page && $page->template->name == 'page') {
+    if ($page instanceof Page && $page->id && $page->template->name == 'page') {
         $fields['current_page'] = [
             'label' => 'Current page title : ' . $page->title,
             'value' => $page->title,

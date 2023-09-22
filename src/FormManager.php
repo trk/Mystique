@@ -159,7 +159,7 @@ class FormManager extends Wire
                 $field['type'] = $type_fallback;
             }
 
-            if (!$field['type']) {
+            if (!isset($field['type']) || !$field['type']) {
                 continue;
             }
 
