@@ -20,6 +20,8 @@ use Altivebir\Mystique\MystiqueValue;
  */
 class InputfieldMystique extends Inputfield
 {
+    const VERSION = '0.0.22';
+
     /**
      * @var FieldtypeMystique
      */
@@ -44,7 +46,7 @@ class InputfieldMystique extends Inputfield
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.22',
+            'version' => self::VERSION,
             'summary' => __('Provides builder input for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',

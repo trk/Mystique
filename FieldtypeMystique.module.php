@@ -17,6 +17,8 @@ use Altivebir\Mystique\MystiqueValue;
  */
 class FieldtypeMystique extends Fieldtype
 {
+    const VERSION = '0.0.22';
+
     /**
      * @var string
      */
@@ -36,7 +38,7 @@ class FieldtypeMystique extends Fieldtype
     {
         return [
             'title' => 'Mystique',
-            'version' => '0.0.22',
+            'version' => self::VERSION,
             'summary' => __('Mystique fields data for ProcessWire CMS/CMF by ALTI VE BIR.'),
             'href' => 'https://www.altivebir.com',
             'author' => 'İskender TOTOĞLU | @ukyo(community), @trk (Github), https://www.altivebir.com',

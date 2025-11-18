@@ -1,0 +1,44 @@
+name: "Tag, Release, Packagist"
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "FieldtypeMystique.module.php"
+jobs:
+  tag_and_release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_FILE: "FieldtypeMystique.module.php"
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Configure Git User
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+      - name: Extract module version
+        id: get_version
+        run: |
+          VERSION=$(grep -oP "const\s+VERSION\s*=\s*['\"]\K[^'\"]+" ${{ env.VERSION_FILE }})
+
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not find the version number in ${{ env.VERSION_FILE }}"
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - name: Create Git Tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+          echo "Generated Tag: $TAG"
+          git tag $TAG
+          git push origin $TAG
+          gh release create $TAG --generate-notes
