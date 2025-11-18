@@ -8,7 +8,7 @@ use Altivebir\Mystique\FormManager;
 use Altivebir\Mystique\MystiqueValue;
 
 /**
- * Class FieldtypeMystique
+ * Class FieldtypeMystique 
  *
  * @author			: İskender TOTOĞLU, @ukyo (community), @trk (Github)
  * @website			: https://www.altivebir.com
